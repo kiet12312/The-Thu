@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Audio FX Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Refined Audio Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -628,7 +628,7 @@
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
                 
-                // Âm thanh "Ting-ting" đúng (2 nốt nhạc vui tươi)
+                // Âm thanh "Ting-ting" đúng (3 nốt nhạc vui tươi)
                 [523.25, 659.25, 783.99].forEach((freq, i) => {
                     let osc = ctx.createOscillator();
                     let gain = ctx.createGain();
@@ -649,18 +649,19 @@
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
                 
-                // Âm thanh trầm cảnh báo khi chọn sai
-                let osc = ctx.createOscillator();
-                let gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
-                gain.gain.setValueAtTime(0.12, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.25);
+                // Âm thanh sai tinh tế, mượt mà hơn (dạng chuông trầm lùi nhẹ nhàng)
+                [320, 240].forEach((freq, i) => {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.1);
+                    gain.gain.setValueAtTime(0.12, now + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.1);
+                    osc.stop(now + i * 0.1 + 0.2);
+                });
             } catch(e) {}
         }
 
@@ -1599,7 +1600,7 @@
             const snapshot = await db.collection('private_quizzes').where('author', '==', currentUser).get();
             let listDiv = document.getElementById('myQuizList');
 
-            if (snapshot.empty) { listDiv.innerHTML = '<p class="text-xs text-label italic">Chưa tạo bộ đề cá nhân nào.</p>'; return; }
+            if (snapshot.empty) { listDiv.innerHTML = '<p class="text-xs text-label italic">Bạn chưa tạo bộ đề cá nhân nào.</p>'; return; }
 
             listDiv.innerHTML = '';
             snapshot.forEach((doc, index) => {
