@@ -6,17 +6,13 @@
     <title>TheThuu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
-        /* Mặc định Dark Mode (Chess It Up) */
         body.dark { background-color: #1C1C1C; color: #f8fafc; }
-        /* Light Mode */
         body:not(.dark) { background-color: #f1f5f9; color: #0f172a; }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -26,15 +22,54 @@
         body.dark .option-label:not(.disabled):hover { background-color: #444444; border-color: #06b6d4; transform: translateX(4px); }
         body:not(.dark) .option-label:not(.disabled):hover { background-color: #e2e8f0; border-color: #06b6d4; transform: translateX(4px); }
         .disabled { pointer-events: none; opacity: 0.9; }
+
+        /* Hiệu ứng nút gạt Toggle Switch phong cách mẫu */
+        .theme-switch {
+            width: 72px;
+            height: 36px;
+            border-radius: 9999px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .theme-switch-handle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Trạng thái Dark (Mặt trăng) */
+        .dark-switch { background-color: #1e1b4b; border: 1px solid #312e81; }
+        .dark-switch .theme-switch-handle {
+            transform: translateX(36px);
+            background-color: #f3f4f6;
+        }
+        /* Trạng thái Light (Mặt trời) */
+        .light-switch { background-color: #38bdf8; border: 1px solid #0284c7; }
+        .light-switch .theme-switch-handle {
+            transform: translateX(0px);
+            background-color: #facc15;
+        }
     </style>
 </head>
 <body class="min-h-screen font-sans flex flex-col dark">
 
-    <!-- THANH HEADER PHÍA TRÊN (CHỨA NÚT CHUYỂN LIGHT / DARK MODE) -->
-    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-200" id="topHeader">
-        <button onclick="toggleTheme()" id="themeToggleBtn" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow transition-colors">
-            <span id="themeIcon">☀️</span> <span id="themeText">Light Mode</span>
-        </button>
+    <!-- THANH HEADER PHÍA TRÊN (CHỨA NÚT GẠT SWITCH) -->
+    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-200 gap-3" id="topHeader">
+        <span id="themeLabel" class="text-xs font-bold tracking-wider uppercase">Dark Mode</span>
+        <div class="theme-switch dark-switch" id="themeSwitchBtn" onclick="toggleTheme()">
+            <div class="theme-switch-handle" id="switchHandle">
+                <span id="switchIcon" class="text-sm">🌙</span>
+            </div>
+        </div>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
@@ -91,8 +126,10 @@
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
                     <span class="font-bold text-cyan-400">TheThuu</span>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="toggleTheme()" class="text-xs px-2 py-1 rounded-lg border theme-btn">☀️/🌙</button>
+                <div class="flex gap-2 items-center">
+                    <div class="theme-switch dark-switch scale-75 origin-right" onclick="toggleTheme()">
+                        <div class="theme-switch-handle"><span class="text-xs">🌙</span></div>
+                    </div>
                     <button onclick="logout()" class="text-xs bg-red-500/25 text-red-400 px-3 py-1 rounded-lg">Đăng Xuất</button>
                 </div>
             </div>
@@ -358,7 +395,7 @@
         let modalCallback = null;
         let selectedDocFile = null;
 
-        // --- QUẢN LÝ LIGHT / DARK MODE ---
+        // --- HÀM GẠT NÚT LIGHT / DARK MODE ---
         function toggleTheme() {
             const htmlEl = document.documentElement;
             const bodyEl = document.body;
@@ -379,18 +416,19 @@
         function applyThemeStyles(theme) {
             const topHeader = document.getElementById('topHeader');
             const sidebar = document.getElementById('sidebar');
-            const themeBtn = document.getElementById('themeToggleBtn');
-            const themeIcon = document.getElementById('themeIcon');
-            const themeText = document.getElementById('themeText');
+            const themeSwitch = document.getElementById('themeSwitchBtn');
+            const switchIcon = document.getElementById('switchIcon');
+            const themeLabel = document.getElementById('themeLabel');
 
             if (theme === 'light') {
                 topHeader.style.backgroundColor = '#ffffff';
                 topHeader.style.borderColor = '#e2e8f0';
                 sidebar.style.backgroundColor = '#ffffff';
                 sidebar.style.borderColor = '#e2e8f0';
-                themeBtn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors";
-                themeIcon.innerText = "🌙";
-                themeText.innerText = "Dark Mode";
+                
+                themeSwitch.className = "theme-switch light-switch";
+                switchIcon.innerText = "☀️";
+                themeLabel.innerText = "Light Mode";
 
                 document.querySelectorAll('.theme-card').forEach(el => {
                     el.style.backgroundColor = '#ffffff';
@@ -415,9 +453,10 @@
                 topHeader.style.borderColor = '#4a4a4a';
                 sidebar.style.backgroundColor = '#363636';
                 sidebar.style.borderColor = '#4a4a4a';
-                themeBtn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow bg-[#363636] hover:bg-[#444444] text-slate-200 border border-[#4a4a4a] transition-colors";
-                themeIcon.innerText = "☀️";
-                themeText.innerText = "Light Mode";
+                
+                themeSwitch.className = "theme-switch dark-switch";
+                switchIcon.innerText = "🌙";
+                themeLabel.innerText = "Dark Mode";
 
                 document.querySelectorAll('.theme-card').forEach(el => {
                     el.style.backgroundColor = '#363636';
