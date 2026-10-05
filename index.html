@@ -230,9 +230,9 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: CHAT (GIAO DIỆN ZALO CHUẨN) -->
-                <div id="tab-global-chat" class="hidden space-y-6">
-                    <div class="theme-card border rounded-2xl p-6 shadow-xl flex flex-col h-[650px]">
+                <!-- TAB 5: CHAT (TRÀN VIỀN TOÀN KHUNG) -->
+                <div id="tab-global-chat" class="hidden flex-1 flex flex-col">
+                    <div class="theme-card border rounded-2xl shadow-xl flex flex-col h-[calc(100vh-140px)] p-6">
                         <div class="border-b pb-3 mb-4 flex justify-between items-center" style="border-color: inherit;">
                             <div>
                                 <h3 class="text-base font-bold text-cyan-400">Chat</h3>
@@ -255,18 +255,9 @@
                             <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-200 font-bold px-2">&times;</button>
                         </div>
 
-                        <!-- Khung soạn tin nhắn chuẩn Zalo -->
+                        <!-- Khung soạn tin nhắn tràn viền -->
                         <div class="flex gap-2 pt-2 border-t items-center" style="border-color: inherit;">
-                            <!-- Nút mở bảng chọn @tag thành viên -->
-                            <div class="relative">
-                                <button onclick="toggleMentionDropdown()" class="theme-btn px-3 py-2.5 rounded-xl text-xs font-bold border">@ Tag</button>
-                                <!-- Danh sách gợi ý tag -->
-                                <div id="mentionDropdown" class="hidden absolute bottom-12 left-0 theme-card border rounded-xl shadow-xl w-48 max-h-36 overflow-y-auto custom-scrollbar z-50 p-1">
-                                    <div class="text-[10px] text-label px-2 py-1 uppercase font-bold">Chọn thành viên:</div>
-                                    <div id="mentionUserList" class="space-y-0.5"></div>
-                                </div>
-                            </div>
-                            <input type="text" id="chatInput" placeholder="Nhập @, tin nhắn tới mọi người..." class="flex-1 theme-input border rounded-xl px-4 py-3 outline-none text-sm" onkeypress="handleChatKeyPress(event)">
+                            <input type="text" id="chatInput" placeholder="Nhập @tên người dùng, tin nhắn tới mọi người..." class="flex-1 theme-input border rounded-xl px-4 py-3 outline-none text-sm" onkeypress="handleChatKeyPress(event)">
                             <button onclick="sendChatMessage()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-xs shadow transition-colors">Gửi 🚀</button>
                         </div>
                     </div>
@@ -299,7 +290,7 @@
                 <!-- TAB 7: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4">
-                        <h3 class="text-base font-bold">⚙️️ Cài Đặt Hệ Thống</h3>
+                        <h3 class="text-base font-bold">⚙️ Cài Đặt Hệ Thống</h3>
                         <div class="space-y-3 text-sm text-label">
                             <p>• Tài khoản đang đăng nhập: <b class="text-cyan-400" id="settingsUsername">---</b></p>
                             <p>• Cơ sở dữ liệu đám mây: <b class="text-teal-400">Firebase Firestore (Active)</b></p>
@@ -491,7 +482,7 @@
         let selectedDocFile = null;
         let viewingAdminUser = null;
         let chatUnsubscribe = null;
-        let replyingTo = null; // Lưu thông tin tin nhắn đang trả lời
+        let replyingTo = null;
 
         function toggleTheme() {
             const htmlEl = document.documentElement;
@@ -747,7 +738,7 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // --- CHAT ZALO STYLE (CÓ REPLY VÀ MENTION) ---
+        // --- CHAT ZALO STYLE (TRÀN VIỀN & MENTION TRỰC TIẾP) ---
         function initGlobalChat() {
             const chatBox = document.getElementById('chatMessagesBox');
             chatBox.innerHTML = '<p class="text-xs text-label text-center">Đang kết nối phòng chat...</p>';
@@ -783,6 +774,10 @@
                             `;
                         }
 
+                        // Highlight @mention trong tin nhắn
+                        let formattedMsg = escapeHtml(msg.message);
+                        formattedMsg = formattedMsg.replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-cyan-300 font-bold bg-cyan-950/40 px-1 py-0.5 rounded">@$1</span>');
+
                         msgDiv.innerHTML = `
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-[10px] font-bold text-label">@${msg.username}</span>
@@ -790,7 +785,7 @@
                             </div>
                             <div class="relative max-w-lg p-3 rounded-2xl text-xs leading-relaxed ${bubbleStyle} shadow">
                                 ${replyHtml}
-                                <div>${escapeHtml(msg.message)}</div>
+                                <div>${formattedMsg}</div>
                                 <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-md shadow">Trả lời</button>
                             </div>
                         `;
@@ -811,35 +806,6 @@
         function cancelReply() {
             replyingTo = null;
             document.getElementById('replyPreviewBox').classList.add('hidden');
-        }
-
-        async function toggleMentionDropdown() {
-            const dropdown = document.getElementById('mentionDropdown');
-            if (!dropdown.classList.contains('hidden')) {
-                dropdown.classList.add('hidden');
-                return;
-            }
-
-            // Lấy danh sách user từ Firebase
-            const usersSnap = await db.collection('users').get();
-            let userListDiv = document.getElementById('mentionUserList');
-            userListDiv.innerHTML = '';
-
-            usersSnap.forEach(doc => {
-                let uname = doc.id;
-                let btn = document.createElement('button');
-                btn.className = 'w-full text-left px-2 py-1.5 rounded hover:bg-cyan-500/20 hover:text-cyan-400 text-xs truncate';
-                btn.innerText = `@${uname}`;
-                btn.onclick = () => {
-                    const input = document.getElementById('chatInput');
-                    input.value += `@${uname} `;
-                    dropdown.classList.add('hidden');
-                    input.focus();
-                };
-                userListDiv.appendChild(btn);
-            });
-
-            dropdown.classList.remove('hidden');
         }
 
         async function sendChatMessage() {
