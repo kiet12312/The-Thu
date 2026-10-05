@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Single-Question Mode & Millisecond Delay Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Millisecond Delay Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -700,7 +700,7 @@
         let isSingleQuestionMode = false;
         let currentSingleIndex = 0;
         let isAutoNextEnabled = false;
-        let autoNextDelayMs = 1000; // Mặc định 1000ms (1 giây)
+        let autoNextDelayMs = 1000;
         let autoNextTimer = null;
 
         function toggleTheme() {
@@ -1546,7 +1546,7 @@
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="text-lg font-black text-teal-500 bg-teal-500/10 px-3 py-1.5 rounded-xl border border-teal-500/20">${r.score} Điểm</div>
-                            <button onclick="confirmDeleteHistory('${r.id}')" class="btn-interactive bg-red-500/15 hover:bg-red-500/25 text-red-500 p-2 rounded-lg text-xs font-bold transition-colors" title="Xóa kết quả">🗑️</button>
+                            <button onclick="confirmDeleteHistory('${r.id}')" class="btn-interactive bg-red-500/15 hover:bg-red-500/25 text-red-500 p-2 rounded-lg text-xs font-bold transition-colors" title="Xóa kết quả">🗑️️</button>
                         </div>
                     `;
                     listDiv.appendChild(item);
@@ -1998,6 +1998,13 @@
         async function startPublicQuiz(id) { const doc = await db.collection('public_quizzes').doc(id).get(); if (doc.exists) openQuizRunner(id, doc.data()); }
 
         function openQuizRunner(id, quiz) {
+            // Ẩn tất cả các tab nền để chỉ hiển thị giao diện làm bài trắc nghiệm
+            ['home', 'my-quizzes', 'public-library', 'history', 'documents-library', 'global-chat', 'feedback', 'settings'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if(el) el.classList.add('hidden');
+            });
+            hideUploadSection();
+
             activeQuizId = id; activeQuizTitleText = quiz.title; currentActiveQuestions = quiz.questions;
             const quizArea = document.getElementById('quizArea');
             document.getElementById('activeQuizTitle').innerText = quiz.title;
@@ -2024,6 +2031,54 @@
                 renderSingleQuestion();
             } else {
                 renderQuizList(currentActiveQuestions);
+            }
+        }
+
+        // --- HÀM XỬ LÝ CHỌN ĐÁP ÁN CHUNG CHO CẢ 2 CHẾ ĐỘ ---
+        function handleOptionSelection(qIndex, selectedOpt, q, optionsDiv, label, radio, badgeSide, questionsTotal, isSingle) {
+            if (label.classList.contains('disabled')) return;
+            
+            const allLabels = optionsDiv.querySelectorAll('label');
+            allLabels.forEach(l => {
+                l.classList.add('disabled');
+                let val = l.querySelector('input').value;
+                let bSide = l.querySelector('div:last-child');
+                if (val.trim() === q.correctAnswer.trim()) {
+                    l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                    bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
+                }
+            });
+
+            radio.checked = true;
+            if (selectedOpt.trim() !== q.correctAnswer.trim()) {
+                label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                playWrongSound();
+            } else {
+                playCorrectSound();
+            }
+
+            let currentProg = {};
+            try {
+                let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                if (old) currentProg = JSON.parse(old);
+            } catch(e) {}
+            currentProg[qIndex] = selectedOpt;
+            localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
+
+            let count = 0;
+            for (let i = 0; i < questionsTotal; i++) {
+                if (currentProg[i]) count++;
+            }
+            document.getElementById('answeredCount').innerText = count;
+
+            if (isSingle && isAutoNextEnabled && qIndex < questionsTotal - 1) {
+                autoNextTimer = setTimeout(() => {
+                    if (isSingleQuestionMode) {
+                        currentSingleIndex++;
+                        renderSingleQuestion();
+                    }
+                }, autoNextDelayMs);
             }
         }
 
@@ -2096,41 +2151,7 @@
                     }
 
                     radio.addEventListener('change', () => {
-                        if (label.classList.contains('disabled')) return;
-                        
-                        const allLabels = optionsDiv.querySelectorAll('label');
-                        allLabels.forEach(l => {
-                            l.classList.add('disabled');
-                            const val = l.querySelector('input').value;
-                            const bSide = l.querySelector('div:last-child');
-                            
-                            if (val.trim() === q.correctAnswer.trim()) {
-                                l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
-                                bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
-                            }
-                        });
-
-                        if (opt.trim() !== q.correctAnswer.trim()) {
-                            label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                            badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
-                            playWrongSound();
-                        } else {
-                            playCorrectSound();
-                        }
-
-                        let currentProg = {};
-                        try {
-                            let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
-                            if (old) currentProg = JSON.parse(old);
-                        } catch(e) {}
-                        currentProg[qIndex] = opt;
-                        localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
-
-                        let count = 0;
-                        for (let i = 0; i < questions.length; i++) {
-                            if (document.querySelector(`input[name="question_${i}"]:checked`)) count++;
-                        }
-                        document.getElementById('answeredCount').innerText = count;
+                        handleOptionSelection(qIndex, opt, q, optionsDiv, label, radio, badgeSide, questions.length, false);
                     });
 
                     optionsDiv.appendChild(label);
@@ -2228,50 +2249,7 @@
                 }
 
                 radio.addEventListener('change', () => {
-                    if (label.classList.contains('disabled')) return;
-                    
-                    const allLabels = optionsDiv.querySelectorAll('label');
-                    allLabels.forEach(l => {
-                        l.classList.add('disabled');
-                        let val = l.querySelector('input').value;
-                        let bSide = l.querySelector('div:last-child');
-                        if (val.trim() === q.correctAnswer.trim()) {
-                            l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
-                            bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
-                        }
-                    });
-
-                    if (opt.trim() !== q.correctAnswer.trim()) {
-                        label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                        badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
-                        playWrongSound();
-                    } else {
-                        playCorrectSound();
-                    }
-
-                    let currentProg = {};
-                    try {
-                        let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
-                        if (old) currentProg = JSON.parse(old);
-                    } catch(e) {}
-                    currentProg[currentSingleIndex] = opt;
-                    localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
-
-                    let count = 0;
-                    for (let i = 0; i < questions.length; i++) {
-                        if (currentProg[i]) count++;
-                    }
-                    document.getElementById('answeredCount').innerText = count;
-
-                    // Auto chuyển câu dựa trên Delay (mili-giây)
-                    if (isAutoNextEnabled && currentSingleIndex < questions.length - 1) {
-                        autoNextTimer = setTimeout(() => {
-                            if (isSingleQuestionMode) {
-                                currentSingleIndex++;
-                                renderSingleQuestion();
-                            }
-                        }, autoNextDelayMs);
-                    }
+                    handleOptionSelection(currentSingleIndex, opt, q, optionsDiv, label, radio, badgeSide, questions.length, true);
                 });
 
                 optionsDiv.appendChild(label);
