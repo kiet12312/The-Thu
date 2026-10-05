@@ -95,18 +95,27 @@
                         🛠️ Góp Ý Báo Lỗi
                     </button>
                     <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
-                        ⚙ Cài Đặt
+                        ⚙️ Cài Đặt
                     </button>
                 </nav>
             </div>
 
-            <!-- User Info Footer in Sidebar -->
+            <!-- User Info Footer in Sidebar with Avatar -->
             <div id="sidebarUserBox" class="border-t pt-4 px-2">
                 <div id="loggedAuthBox" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold truncate max-w-[120px]" id="sidebarUsername">User</span>
-                        <span id="sidebarAdminBadge" class="hidden bg-red-500/30 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded">ADMIN</span>
+                        <div class="flex items-center gap-2.5 cursor-pointer group" onclick="triggerAvatarChange()" title="Nhấn để đổi ảnh đại diện">
+                            <div id="sidebarAvatarContainer" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm shadow overflow-hidden border border-cyan-500/50">
+                                <!-- Render Avatar here -->
+                            </div>
+                            <div class="overflow-hidden">
+                                <span class="text-xs font-bold truncate block max-w-[90px]" id="sidebarUsername">User</span>
+                                <span class="text-[10px] text-cyan-400 group-hover:underline">Đổi avatar</span>
+                            </div>
+                        </div>
+                        <span id="sidebarAdminBadge" class="hidden bg-red-500/30 text-red-300 text-[10px] font-bold px-1.5 py-0.5 rounded">ADMIN</span>
                     </div>
+                    <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
                     <button onclick="logout()" class="w-full bg-red-500/25 hover:bg-red-500/35 text-red-400 font-medium py-1.5 rounded-lg text-xs transition-colors">
                         Đăng Xuất
                     </button>
@@ -230,7 +239,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: CHAT (TRÀN VIỀN TOÀN KHUNG) -->
+                <!-- TAB 5: CHAT (GIAO DIỆN CHUẨN HÌNH 2 & TRÀN VIỀN) -->
                 <div id="tab-global-chat" class="hidden flex-1 flex flex-col">
                     <div class="theme-card border rounded-2xl shadow-xl flex flex-col h-[calc(100vh-140px)] p-6">
                         <div class="border-b pb-3 mb-4 flex justify-between items-center" style="border-color: inherit;">
@@ -267,7 +276,7 @@
                 <div id="tab-feedback" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6">
                         <div class="text-center space-y-2">
-                            <h3 class="text-xl font-bold text-cyan-400">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <h3 class="text-xl font-bold text-cyan-400">🛠️️ Gửi Góp Ý & Báo Lỗi</h3>
                             <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
                         </div>
 
@@ -483,6 +492,7 @@
         let viewingAdminUser = null;
         let chatUnsubscribe = null;
         let replyingTo = null;
+        let userAvatars = {}; // Cache avatar của các user
 
         function toggleTheme() {
             const htmlEl = document.documentElement;
@@ -596,6 +606,8 @@
                     document.getElementById('sidebarUsername').innerText = savedUser;
                     document.getElementById('settingsUsername').innerText = savedUser;
 
+                    renderUserAvatar(savedUser, doc.data().avatar);
+
                     if (doc.data().isAdmin) {
                         document.getElementById('sidebarAdminBadge').classList.remove('hidden');
                         document.getElementById('adminDashboard').classList.remove('hidden');
@@ -610,6 +622,51 @@
                 }
             }
         });
+
+        function getRandomColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const colors = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#ec4899'];
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function renderUserAvatar(username, avatarData) {
+            const container = document.getElementById('sidebarAvatarContainer');
+            if (!container) return;
+
+            if (avatarData) {
+                container.innerHTML = `<img src="${avatarData}" class="w-full h-full object-cover">`;
+            } else {
+                let firstChar = username.charAt(0).toUpperCase();
+                let bgColor = getRandomColor(username);
+                container.style.backgroundColor = bgColor;
+                container.innerHTML = `<span class="text-white text-xs font-bold">${firstChar}</span>`;
+            }
+        }
+
+        function triggerAvatarChange() {
+            document.getElementById('avatarFileInput').click();
+        }
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !currentUser) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Avatar = e.target.result;
+                try {
+                    await db.collection('users').doc(currentUser).update({ avatar: base64Avatar });
+                    renderUserAvatar(currentUser, base64Avatar);
+                    showAlertModal("Cập nhật ảnh đại diện thành công!");
+                } catch (err) {
+                    showAlertModal("Lỗi cập nhật avatar: " + err.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
 
         function showAlertModal(message, title = "Thông Báo") {
             document.getElementById('alertTitle').innerText = title;
@@ -711,6 +768,8 @@
                 document.getElementById('sidebarUsername').innerText = username;
                 document.getElementById('settingsUsername').innerText = username;
 
+                renderUserAvatar(username, doc.data().avatar);
+
                 if (doc.data().isAdmin) {
                     document.getElementById('sidebarAdminBadge').classList.remove('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -738,12 +797,18 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // --- CHAT ZALO STYLE (TRÀN VIỀN & MENTION TRỰC TIẾP) ---
-        function initGlobalChat() {
+        // --- CHAT STYLE HÌNH 2 (AVATAR TRÒN KÈM BONG BÓNG CHAT) ---
+        async function initGlobalChat() {
             const chatBox = document.getElementById('chatMessagesBox');
             chatBox.innerHTML = '<p class="text-xs text-label text-center">Đang kết nối phòng chat...</p>';
 
             if (chatUnsubscribe) chatUnsubscribe();
+
+            // Lấy trước thông tin avatar các user
+            const usersSnap = await db.collection('users').get();
+            usersSnap.forEach(doc => {
+                userAvatars[doc.id] = doc.data().avatar || null;
+            });
 
             chatUnsubscribe = db.collection('global_chat')
                 .orderBy('createdAt', 'asc')
@@ -759,10 +824,23 @@
                         let msgId = doc.id;
                         let isMe = (msg.username === currentUser);
                         let msgDiv = document.createElement('div');
-                        msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3 group`;
+                        
+                        // Định dạng bố cục chuẩn hình 2: Trái hoặc Phải
+                        msgDiv.className = `flex items-start gap-2.5 mb-3 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
 
                         let bubbleStyle = isMe ? 'bg-cyan-500 text-slate-950 font-medium' : 'theme-input border';
                         let timeStr = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Vừa xong';
+
+                        // Render avatar tròn cạnh tin nhắn
+                        let uAvatar = userAvatars[msg.username];
+                        let avatarHtml = '';
+                        if (uAvatar) {
+                            avatarHtml = `<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-slate-600 shadow"><img src="${uAvatar}" class="w-full h-full object-cover"></div>`;
+                        } else {
+                            let firstChar = msg.username ? msg.username.charAt(0).toUpperCase() : 'U';
+                            let bgCol = getRandomColor(msg.username || 'user');
+                            avatarHtml = `<div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs flex-shrink-0 shadow" style="background-color: ${bgCol};">${firstChar}</div>`;
+                        }
 
                         let replyHtml = '';
                         if (msg.replyTo) {
@@ -774,19 +852,21 @@
                             `;
                         }
 
-                        // Highlight @mention trong tin nhắn
                         let formattedMsg = escapeHtml(msg.message);
                         formattedMsg = formattedMsg.replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-cyan-300 font-bold bg-cyan-950/40 px-1 py-0.5 rounded">@$1</span>');
 
                         msgDiv.innerHTML = `
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <span class="text-[10px] font-bold text-label">@${msg.username}</span>
-                                <span class="text-[10px] text-label">${timeStr}</span>
-                            </div>
-                            <div class="relative max-w-lg p-3 rounded-2xl text-xs leading-relaxed ${bubbleStyle} shadow">
-                                ${replyHtml}
-                                <div>${formattedMsg}</div>
-                                <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-md shadow">Trả lời</button>
+                            ${avatarHtml}
+                            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-lg">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold text-label">@${msg.username}</span>
+                                    <span class="text-[10px] text-label">${timeStr}</span>
+                                </div>
+                                <div class="relative p-3 rounded-2xl text-xs leading-relaxed ${bubbleStyle} shadow">
+                                    ${replyHtml}
+                                    <div>${formattedMsg}</div>
+                                    <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute ${isMe ? '-left-12' : '-right-12'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-md shadow">Trả lời</button>
+                                </div>
                             </div>
                         `;
                         chatBox.appendChild(msgDiv);
@@ -864,7 +944,7 @@
             }
         }
 
-        // --- ADMIN PANEL: QUẢN LÝ THÀNH VIÊN & HÒM THƯ GÓP Ý ---
+        // --- ADMIN PANEL ---
         async function loadAdminPanel() {
             const snapshot = await db.collection('users').get();
             let listDiv = document.getElementById('adminUserList');
@@ -876,12 +956,9 @@
                 let div = document.createElement('div');
                 div.className = 'theme-input p-2.5 rounded-lg border mb-1.5 flex justify-between items-center text-xs';
                 
-                let deleteBtnHtml = '';
-                if (userId !== 'admin') {
-                    deleteBtnHtml = `<button onclick="event.stopPropagation(); confirmDeleteUser('${userId}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
-                } else {
-                    deleteBtnHtml = `<span class="text-red-400 font-bold">Bảo vệ</span>`;
-                }
+                let deleteBtnHtml = userId !== 'admin' ? 
+                    `<button onclick="event.stopPropagation(); confirmDeleteUser('${userId}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>` : 
+                    `<span class="text-red-400 font-bold">Bảo vệ</span>`;
 
                 div.innerHTML = `
                     <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="openAdminUserDetail('${userId}')">
