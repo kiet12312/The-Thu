@@ -219,6 +219,21 @@
         </main>
     </div>
 
+    <!-- CHESS IT UP STYLE CUSTOM CONFIRM MODAL -->
+    <div id="customModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4 animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modalTitle" class="text-base font-bold text-cyan-400">Xác nhận thao tác</h3>
+                <button onclick="closeModal(false)" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+            </div>
+            <p id="modalMessage" class="text-sm text-slate-300 leading-relaxed">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            <div class="flex justify-end gap-3 pt-2">
+                <button id="modalCancelBtn" onclick="closeModal(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-colors">Hủy</button>
+                <button id="modalConfirmBtn" onclick="closeModal(true)" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold transition-colors shadow-lg shadow-cyan-500/20">Xác Nhận</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBRgErKuJ75M_fguuTGQPvEn3X2XypT5ok",
@@ -240,6 +255,22 @@
         let isRegisterMode = false;
         let currentUser = null;
         let fileContent = '';
+        let modalCallback = null;
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('customModal').classList.remove('hidden');
+            modalCallback = onConfirm;
+        }
+
+        function closeModal(result) {
+            document.getElementById('customModal').classList.add('hidden');
+            if (result && typeof modalCallback === 'function') {
+                modalCallback();
+            }
+            modalCallback = null;
+        }
 
         async function initAdminAccount() {
             const adminRef = db.collection('users').doc('admin');
@@ -250,7 +281,6 @@
         }
         initAdminAccount();
 
-        // --- KIỂM TRA PHIÊN ĐĂNG NHẬP VÀ TỰ ĐIỀN API KEY ---
         window.addEventListener('DOMContentLoaded', async () => {
             const savedUser = localStorage.getItem('quiz_current_user');
             const savedApiKey = localStorage.getItem('quiz_gemini_apikey');
@@ -366,7 +396,6 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // --- BẢNG ĐIỀU KHIỂN ADMIN (CÓ TÍNH NĂNG XÓA TÀI KHOẢN) ---
         async function loadAdminPanel() {
             const snapshot = await db.collection('users').get();
             let listDiv = document.getElementById('adminUserList');
@@ -380,7 +409,7 @@
                 
                 let deleteBtnHtml = '';
                 if (userId !== 'admin') {
-                    deleteBtnHtml = `<button onclick="deleteUserAccount('${userId}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
+                    deleteBtnHtml = `<button onclick="confirmDeleteUser('${userId}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
                 } else {
                     deleteBtnHtml = `<span class="text-red-400 font-bold">Bảo vệ</span>`;
                 }
@@ -396,26 +425,27 @@
             });
         }
 
-        async function deleteUserAccount(userId) {
-            if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${userId}" và toàn bộ dữ liệu của họ không?`)) return;
-            
-            try {
-                // Xóa tài khoản trong collection users
-                await db.collection('users').doc(userId).delete();
-                
-                // Xóa các bộ đề riêng tư của user đó
-                const quizzesSnapshot = await db.collection('private_quizzes').where('author', '==', userId).get();
-                const batch = db.batch();
-                quizzesSnapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
+        function confirmDeleteUser(userId) {
+            showConfirmModal(
+                "Xác Nhận Xóa Tài Khoản",
+                `Bạn có chắc chắn muốn xóa tài khoản "${userId}" và toàn bộ dữ liệu của họ không?`,
+                async () => {
+                    try {
+                        await db.collection('users').doc(userId).delete();
+                        const quizzesSnapshot = await db.collection('private_quizzes').where('author', '==', userId).get();
+                        const batch = db.batch();
+                        quizzesSnapshot.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        await batch.commit();
 
-                alert(`Đã xóa thành công tài khoản "${userId}"!`);
-                loadAdminPanel();
-            } catch (error) {
-                alert("Lỗi khi xóa tài khoản: " + error.message);
-            }
+                        alert(`Đã xóa thành công tài khoản "${userId}"!`);
+                        loadAdminPanel();
+                    } catch (error) {
+                        alert("Lỗi khi xóa tài khoản: " + error.message);
+                    }
+                }
+            );
         }
 
         async function loadMyQuizzes() {
@@ -441,11 +471,22 @@
                     <div class="flex gap-2">
                         <button onclick="startMyQuiz('${id}')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">Làm Bài</button>
                         ${!quiz.shared ? `<button onclick="shareQuiz('${id}')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">🌐 Chia Sẻ</button>` : ''}
-                        <button onclick="deleteMyQuiz('${id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>
+                        <button onclick="confirmDeleteMyQuiz('${id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>
                     </div>
                 `;
                 listDiv.appendChild(item);
             });
+        }
+
+        function confirmDeleteMyQuiz(id) {
+            showConfirmModal(
+                "Xác Nhận Xóa Bộ Đề",
+                "Bạn có chắc chắn muốn xóa bộ đề cá nhân này không?",
+                async () => {
+                    await db.collection('private_quizzes').doc(id).delete();
+                    loadMyQuizzes();
+                }
+            );
         }
 
         async function shareQuiz(id) {
@@ -465,12 +506,6 @@
             alert("Đã công khai chia sẻ bộ đề lên Thư viện chung thành công!");
             loadMyQuizzes();
             loadPublicQuizzes();
-        }
-
-        async function deleteMyQuiz(id) {
-            if(!confirm("Bạn có chắc muốn xóa bộ đề này?")) return;
-            await db.collection('private_quizzes').doc(id).delete();
-            loadMyQuizzes();
         }
 
         async function loadPublicQuizzes() {
@@ -495,17 +530,22 @@
                     </div>
                     <div class="flex gap-2">
                         <button onclick="startPublicQuiz('${id}')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">Làm Bài</button>
-                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="deletePublicQuiz('${id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : ''}
+                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="confirmDeletePublicQuiz('${id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : ''}
                     </div>
                 `;
                 listDiv.appendChild(item);
             });
         }
 
-        async function deletePublicQuiz(id) {
-            if(!confirm("Xóa bộ đề này khỏi thư viện chung?")) return;
-            await db.collection('public_quizzes').doc(id).delete();
-            loadPublicQuizzes();
+        function confirmDeletePublicQuiz(id) {
+            showConfirmModal(
+                "Xác Nhận Xóa Bộ Đề Chung",
+                "Bạn có chắc muốn xóa bộ đề này khỏi thư viện chung không?",
+                async () => {
+                    await db.collection('public_quizzes').doc(id).delete();
+                    loadPublicQuizzes();
+                }
+            );
         }
 
         function showUploadSection() { 
@@ -568,7 +608,6 @@
             if (!apiKey) return alert("Vui lòng nhập Gemini API Key!");
             if (!fileContent) return alert("Vui lòng tải lên file tài liệu!");
 
-            // --- LƯU LẠI API KEY VÀO BỘ NHỚ DUYỆT WEB ĐỂ DÙNG CHO CÁC LẦN SAU ---
             localStorage.setItem('quiz_gemini_apikey', apiKey);
 
             document.getElementById('generateBtn').disabled = true;
