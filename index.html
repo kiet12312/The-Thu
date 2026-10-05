@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Word Support & Drag-n-Drop Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Auto-Save Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -448,9 +448,10 @@
                     <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex justify-between items-center shadow-xl transition-colors duration-500">
                         <div>
                             <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-500">Tên Bài Học</h2>
-                            <p class="text-xs text-label mt-1">Đã chọn: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span> câu</p>
+                            <p class="text-xs text-label mt-1">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span> câu</p>
                         </div>
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <button onclick="clearQuizProgress()" class="text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-3.5 py-2 rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 Làm Lại</button>
                             <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2.5 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
                         </div>
                     </div>
@@ -1882,7 +1883,14 @@
             quizContainer.innerHTML = '';
             
             document.getElementById('totalCount').innerText = questions.length;
-            document.getElementById('answeredCount').innerText = 0;
+            
+            let savedProgress = {};
+            try {
+                let localData = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                if (localData) savedProgress = JSON.parse(localData);
+            } catch(e) {}
+
+            let answeredCount = 0;
 
             questions.forEach((q, qIndex) => {
                 const qDiv = document.createElement('div');
@@ -1897,6 +1905,9 @@
                 const optionsDiv = document.createElement('div');
                 optionsDiv.className = 'space-y-3';
 
+                let userSelectedOpt = savedProgress[qIndex] || null;
+                if (userSelectedOpt) answeredCount++;
+
                 q.options.forEach((opt) => {
                     const label = document.createElement('label');
                     label.className = 'option-label flex items-center p-4 border rounded-xl cursor-pointer theme-input hover:shadow-md';
@@ -1908,19 +1919,82 @@
                     const textSpan = document.createElement('span');
                     textSpan.className = 'font-medium text-sm leading-relaxed'; textSpan.innerText = opt;
 
-                    radio.addEventListener('change', () => {
-                        let answeredCount = 0;
-                        for (let i = 0; i < questions.length; i++) {
-                            if (document.querySelector(`input[name="question_${i}"]:checked`)) {
-                                answeredCount++;
+                    if (userSelectedOpt) {
+                        label.classList.add('disabled', 'opacity-90');
+                        label.classList.remove('cursor-pointer', 'hover:shadow-md');
+                        if (opt.trim() === q.correctAnswer.trim()) {
+                            label.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
+                            const checkIcon = document.createElement('span');
+                            checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
+                            checkIcon.innerHTML = '✔';
+                            label.appendChild(checkIcon);
+                        }
+                        if (opt === userSelectedOpt) {
+                            radio.checked = true;
+                            if (userSelectedOpt.trim() !== q.correctAnswer.trim()) {
+                                label.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
+                                const crossIcon = document.createElement('span');
+                                crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
+                                crossIcon.innerHTML = '❌';
+                                label.appendChild(crossIcon);
                             }
                         }
-                        document.getElementById('answeredCount').innerText = answeredCount;
+                    }
+
+                    radio.addEventListener('change', () => {
+                        if (label.classList.contains('disabled')) return;
+                        
+                        const allLabels = optionsDiv.querySelectorAll('label');
+                        allLabels.forEach(l => {
+                            l.classList.add('disabled', 'opacity-90');
+                            l.classList.remove('cursor-pointer', 'hover:shadow-md');
+                            const val = l.querySelector('input').value;
+                            if (val.trim() === q.correctAnswer.trim()) {
+                                l.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
+                                const checkIcon = document.createElement('span');
+                                checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
+                                checkIcon.innerHTML = '✔';
+                                l.appendChild(checkIcon);
+                            }
+                        });
+
+                        if (opt.trim() !== q.correctAnswer.trim()) {
+                            label.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
+                            const crossIcon = document.createElement('span');
+                            crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
+                            crossIcon.innerHTML = '❌';
+                            label.appendChild(crossIcon);
+                        }
+
+                        // Auto-save tiến trình ngay lập tức
+                        let currentProg = {};
+                        try {
+                            let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                            if (old) currentProg = JSON.parse(old);
+                        } catch(e) {}
+                        currentProg[qIndex] = opt;
+                        localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
+
+                        // Cập nhật số câu đã trả lời
+                        let count = 0;
+                        for (let i = 0; i < questions.length; i++) {
+                            if (document.querySelector(`input[name="question_${i}"]:checked`)) count++;
+                        }
+                        document.getElementById('answeredCount').innerText = count;
                     });
 
                     label.appendChild(radio); label.appendChild(textSpan); optionsDiv.appendChild(label);
                 });
                 qDiv.appendChild(optionsDiv); quizContainer.appendChild(qDiv);
+            });
+            document.getElementById('answeredCount').innerText = answeredCount;
+        }
+
+        function clearQuizProgress() {
+            showConfirmModal("Xác Nhận Làm Lại", "Bạn có muốn xóa tiến trình đang làm dở để bắt đầu lại từ đầu không?", () => {
+                localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                renderQuiz(currentActiveQuestions);
+                showAlertModal("Đã đặt lại tiến trình bài thi!");
             });
         }
 
@@ -1957,11 +2031,13 @@
                     } else {
                         optionsDiv.forEach(l => {
                             if (l.querySelector('input').value === userChoice) {
-                                l.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
-                                const crossIcon = document.createElement('span');
-                                crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
-                                crossIcon.innerHTML = '❌';
-                                l.appendChild(crossIcon);
+                                if (!l.classList.contains('bg-red-500/25')) {
+                                    l.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
+                                    const crossIcon = document.createElement('span');
+                                    crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
+                                    crossIcon.innerHTML = '❌';
+                                    l.appendChild(crossIcon);
+                                }
                             }
                         });
                     }
@@ -1978,6 +2054,8 @@
                     score: finalScore,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                // Xóa lưu tiến trình dở sau khi nộp bài thành công
+                localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
             } catch (err) {
                 console.error("Lỗi lưu kết quả:", err);
             }
