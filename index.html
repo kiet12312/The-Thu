@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
         /* --- GENERAL STYLES --- */
-        body { transition: background 0.5s ease, color 0.5s ease; }
+        body { transition: background 0.5s ease, color 0.5s ease; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
         /* --- LIGHT MODE (GLASSMORPHISM & GRADIENT) --- */
         body:not(.dark) { 
@@ -123,10 +123,10 @@
         .btn-interactive:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="min-h-screen font-sans flex flex-col dark transition-colors duration-500">
+<body class="font-sans dark transition-colors duration-500">
 
-    <!-- THANH HEADER PHÍA TRÊN -->
-    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-10" id="topHeader">
+    <!-- THANH HEADER PHÍA TRÊN (GHIM CỐ ĐỊNH) -->
+    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-20 shrink-0" id="topHeader">
         <span id="themeLabel" class="text-xs font-bold tracking-wider uppercase transition-colors duration-500">Dark Mode</span>
         <div class="theme-switch dark-switch" id="themeSwitchBtn" onclick="toggleTheme()">
             <div class="theme-switch-handle" id="switchHandle">
@@ -135,10 +135,10 @@
         </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden w-full h-[calc(100vh-61px)]">
         
-        <!-- SIDEBAR TRÁI -->
-        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-500 theme-sidebar z-10" id="sidebar">
+        <!-- SIDEBAR TRÁI (GHIM CỐ ĐỊNH) -->
+        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-500 theme-sidebar z-10 shrink-0 h-full overflow-y-auto custom-scrollbar" id="sidebar">
             <div class="space-y-6">
                 <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2 group cursor-pointer">
@@ -173,7 +173,7 @@
             </div>
 
             <!-- User Info Footer in Sidebar with Avatar -->
-            <div id="sidebarUserBox" class="border-t border-slate-500/20 pt-4 px-2">
+            <div id="sidebarUserBox" class="border-t border-slate-500/20 pt-4 px-2 mt-4">
                 <div id="loggedAuthBox" class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5 cursor-pointer group" onclick="triggerAvatarChange()" title="Nhấn để đổi ảnh đại diện">
@@ -195,11 +195,11 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 flex flex-col relative z-0">
+        <!-- MAIN CONTENT AREA (CHỈ PHẦN NÀY CUỘN) -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 flex flex-col relative z-0 h-full">
             
             <!-- MOBILE HEADER -->
-            <div class="md:hidden flex justify-between items-center p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500">
+            <div class="md:hidden flex justify-between items-center p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500 shrink-0">
                 <div class="flex items-center gap-2">
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
                     <span class="font-bold text-cyan-500">TheThuu</span>
@@ -382,7 +382,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tự động chia đều)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Smart AI Parsing & Quiz Editor Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Fixed Sidebar & Header Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -460,9 +460,7 @@
                 <button onclick="closeQuizEditor()" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
             </div>
 
-            <div id="editorQuestionsContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
-                <!-- Dynamic questions list for editing -->
-            </div>
+            <div id="editorQuestionsContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2"></div>
 
             <div class="border-t border-slate-500/20 pt-4 flex justify-between items-center shrink-0">
                 <button onclick="addEmptyQuestion()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border hover:bg-cyan-500/10 hover:text-cyan-500">➕ Thêm Câu Hỏi</button>
@@ -1562,10 +1560,6 @@
         function updateQuestionText(idx, val) { editingQuizQuestions[idx].question = val; }
         function updateOptionText(qIdx, optIdx, val) { 
             editingQuizQuestions[qIdx].options[optIdx] = val; 
-            // Nếu option đang sửa chính là đáp án đúng, cập nhật luôn correctAnswer
-            if (editingQuizQuestions[qIdx].correctAnswer === editingQuizQuestions[qIdx].options[optIdx]) {
-                // Giữ nguyên logic sync
-            }
         }
         function setCorrectOption(qIdx, optIdx) {
             editingQuizQuestions[qIdx].correctAnswer = editingQuizQuestions[qIdx].options[optIdx];
@@ -1591,10 +1585,8 @@
             }
 
             try {
-                // Cập nhật private_quizzes
                 await db.collection('private_quizzes').doc(editingQuizId).update({ questions: editingQuizQuestions });
 
-                // Nếu bộ đề này đã public, cập nhật luôn public_quizzes
                 const publicRef = db.collection('public_quizzes').doc(editingQuizId);
                 const publicDoc = await publicRef.get();
                 if (publicDoc.exists) {
@@ -1652,12 +1644,17 @@
             const section = document.getElementById('setupSection');
             section.classList.remove('hidden'); section.classList.remove('animate-slide-up');
             void section.offsetWidth; section.classList.add('animate-slide-up');
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            const mainContent = document.querySelector('main');
+            mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
         }
         
         function hideUploadSection() { document.getElementById('setupSection').classList.add('hidden'); }
         
-        function backToDashboard() { document.getElementById('quizArea').classList.add('hidden'); loadMyQuizzes(); loadPublicQuizzes(); }
+        function backToDashboard() { 
+            document.getElementById('quizArea').classList.add('hidden'); 
+            loadMyQuizzes(); 
+            loadPublicQuizzes(); 
+        }
 
         const fileInput = document.getElementById('fileInput');
         fileInput.addEventListener('change', async (e) => {
@@ -1756,7 +1753,8 @@
             document.getElementById('activeQuizTitle').innerText = quiz.title;
             
             quizArea.classList.remove('hidden'); quizArea.classList.remove('animate-fade-in'); void quizArea.offsetWidth; quizArea.classList.add('animate-fade-in');
-            renderQuiz(quiz.questions); window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderQuiz(quiz.questions); 
+            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderQuiz(questions) {
