@@ -1,63 +1,81 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TheThuu - Trắc Nghiệm Thông Minh</title>
+    <title>TheThuu</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
-        body { background-color: #1C1C1C; color: #f8fafc; }
+        /* Mặc định Dark Mode (Chess It Up) */
+        body.dark { background-color: #1C1C1C; color: #f8fafc; }
+        /* Light Mode */
+        body:not(.dark) { background-color: #f1f5f9; color: #0f172a; }
+
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a4a4a; border-radius: 4px; }
         .option-label { transition: all 0.2s ease-in-out; }
-        .option-label:not(.disabled):hover { background-color: #444444; border-color: #06b6d4; transform: translateX(4px); }
+        
+        body.dark .option-label:not(.disabled):hover { background-color: #444444; border-color: #06b6d4; transform: translateX(4px); }
+        body:not(.dark) .option-label:not(.disabled):hover { background-color: #e2e8f0; border-color: #06b6d4; transform: translateX(4px); }
         .disabled { pointer-events: none; opacity: 0.9; }
     </style>
 </head>
-<body class="min-h-screen font-sans flex flex-col">
+<body class="min-h-screen font-sans flex flex-col dark">
+
+    <!-- THANH HEADER PHÍA TRÊN (CHỨA NÚT CHUYỂN LIGHT / DARK MODE) -->
+    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-200" id="topHeader">
+        <button onclick="toggleTheme()" id="themeToggleBtn" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow transition-colors">
+            <span id="themeIcon">☀️</span> <span id="themeText">Light Mode</span>
+        </button>
+    </header>
 
     <div class="flex flex-1 overflow-hidden">
         
         <!-- SIDEBAR TRÁI -->
-        <aside class="w-64 bg-[#363636] border-r border-[#4a4a4a] flex flex-col justify-between hidden md:flex p-4 shadow-xl">
+        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-200" id="sidebar">
             <div class="space-y-6">
                 <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2">
-                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow border border-[#4a4a4a]">
-                    <span class="font-bold text-lg tracking-wider text-slate-100">TheThuu</span>
+                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow border">
+                    <span class="font-bold text-lg tracking-wider">TheThuu</span>
                 </div>
 
                 <!-- Menu Navigation -->
                 <nav class="space-y-1.5">
-                    <button onclick="switchTab('home')" id="nav-home" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#444444] text-cyan-400 font-medium text-sm transition-colors text-left shadow">
+                    <button onclick="switchTab('home')" id="nav-home" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-colors text-left shadow nav-btn">
                         🏠 Trang Chủ
                     </button>
-                    <button onclick="switchTab('my-quizzes')" id="nav-my-quizzes" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
+                    <button onclick="switchTab('my-quizzes')" id="nav-my-quizzes" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         📂 Đề Thi Của Tôi
                     </button>
-                    <button onclick="switchTab('public-library')" id="nav-public-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
+                    <button onclick="switchTab('public-library')" id="nav-public-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         🌐 Thư Viện Đề Thi Chung
                     </button>
-                    <button onclick="switchTab('documents-library')" id="nav-documents-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
+                    <button onclick="switchTab('documents-library')" id="nav-documents-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         📚 Thư Viện Tài Liệu
                     </button>
-                    <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
+                    <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         ⚙ Cài Đặt
                     </button>
                 </nav>
             </div>
 
             <!-- User Info Footer in Sidebar -->
-            <div id="sidebarUserBox" class="border-t border-[#4a4a4a] pt-4 px-2">
+            <div id="sidebarUserBox" class="border-t pt-4 px-2">
                 <div id="loggedAuthBox" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-200 truncate max-w-[120px]" id="sidebarUsername">User</span>
+                        <span class="text-xs font-bold truncate max-w-[120px]" id="sidebarUsername">User</span>
                         <span id="sidebarAdminBadge" class="hidden bg-red-500/30 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded">ADMIN</span>
                     </div>
-                    <button onclick="logout()" class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium py-1.5 rounded-lg text-xs transition-colors">
+                    <button onclick="logout()" class="w-full bg-red-500/25 hover:bg-red-500/35 text-red-400 font-medium py-1.5 rounded-lg text-xs transition-colors">
                         Đăng Xuất
                     </button>
                 </div>
@@ -68,33 +86,36 @@
         <main class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 flex flex-col">
             
             <!-- MOBILE HEADER -->
-            <div class="md:hidden flex justify-between items-center bg-[#363636] border border-[#4a4a4a] p-4 rounded-2xl mb-6 shadow">
+            <div class="md:hidden flex justify-between items-center p-4 rounded-2xl mb-6 shadow theme-card">
                 <div class="flex items-center gap-2">
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
                     <span class="font-bold text-cyan-400">TheThuu</span>
                 </div>
-                <button onclick="logout()" class="text-xs bg-red-500/20 text-red-300 px-3 py-1 rounded-lg">Đăng Xuất</button>
+                <div class="flex gap-2">
+                    <button onclick="toggleTheme()" class="text-xs px-2 py-1 rounded-lg border theme-btn">☀️/🌙</button>
+                    <button onclick="logout()" class="text-xs bg-red-500/25 text-red-400 px-3 py-1 rounded-lg">Đăng Xuất</button>
+                </div>
             </div>
 
             <!-- KHUNG ĐĂNG NHẬP / ĐĂNG KÝ -->
-            <div id="authSection" class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-8 max-w-md mx-auto my-auto shadow-2xl w-full">
+            <div id="authSection" class="theme-card rounded-2xl p-8 max-w-md mx-auto my-auto shadow-2xl w-full border">
                 <h2 id="authTitle" class="text-2xl font-bold text-cyan-400 mb-6 text-center">Đăng Nhập Tài Khoản</h2>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Tên đăng nhập:</label>
-                        <input type="text" id="usernameInput" placeholder="Ví dụ: doanhkiet" class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                        <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Tên đăng nhập:</label>
+                        <input type="text" id="usernameInput" placeholder="Ví dụ: doanhkiet" class="w-full theme-input border rounded-xl px-4 py-3 outline-none text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Mật khẩu:</label>
-                        <input type="password" id="passwordInput" placeholder="••••••••" class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                        <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Mật khẩu:</label>
+                        <input type="password" id="passwordInput" placeholder="••••••••" class="w-full theme-input border rounded-xl px-4 py-3 outline-none text-sm">
                     </div>
 
                     <button id="authBtn" onclick="handleAuth()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition-colors text-sm shadow-lg shadow-cyan-500/20">
                         Đăng Nhập
                     </button>
 
-                    <p class="text-center text-xs text-slate-300 mt-4">
+                    <p class="text-center text-xs mt-4 text-label">
                         <span id="authToggleText">Chưa có tài khoản?</span> 
                         <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-cyan-400 font-bold hover:underline ml-1">Đăng ký ngay</button>
                     </p>
@@ -106,18 +127,18 @@
                 
                 <!-- TAB 1: TRANG CHỦ -->
                 <div id="tab-home" class="space-y-6">
-                    <div id="adminDashboard" class="hidden bg-[#363636] border border-red-500/30 rounded-2xl p-6 shadow-xl">
+                    <div id="adminDashboard" class="hidden theme-card border border-red-500/30 rounded-2xl p-6 shadow-xl">
                         <h3 class="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
-                        <p class="text-xs text-slate-300 mb-4">Quản lý toàn bộ người dùng và hệ thống dữ liệu trên đám mây.</p>
-                        <div class="bg-[#1C1C1C] border border-[#4a4a4a] p-4 rounded-xl">
-                            <h4 class="font-bold text-slate-200 mb-2 text-xs uppercase tracking-wider">Danh Sách Người Dùng Trên Mây</h4>
-                            <div id="adminUserList" class="space-y-1.5 max-h-40 overflow-y-auto text-xs text-slate-300 custom-scrollbar">Đang tải...</div>
+                        <p class="text-xs mb-4 text-label">Quản lý toàn bộ người dùng và hệ thống dữ liệu trên đám mây.</p>
+                        <div class="theme-input border p-4 rounded-xl">
+                            <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-label">Danh Sách Người Dùng Trên Mây</h4>
+                            <div id="adminUserList" class="space-y-1.5 max-h-40 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
                         </div>
                     </div>
 
-                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-8 shadow-xl text-center space-y-4">
+                    <div class="theme-card border rounded-2xl p-8 shadow-xl text-center space-y-4">
                         <h2 class="text-2xl font-bold text-cyan-400">Chào mừng bạn quay trở lại!</h2>
-                        <p class="text-sm text-slate-300 max-w-lg mx-auto">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, chia sẻ tài liệu học tập hoặc tạo bộ đề trắc nghiệm mới bằng AI.</p>
+                        <p class="text-sm max-w-lg mx-auto text-label">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, chia sẻ tài liệu học tập hoặc tạo bộ đề trắc nghiệm mới bằng AI.</p>
                         <button onclick="switchTab('my-quizzes'); showUploadSection();" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-lg">
                             ➕ Tạo Bộ Đề Mới Ngay
                         </button>
@@ -126,36 +147,36 @@
 
                 <!-- TAB 2: ĐỀ THI CỦA TÔI -->
                 <div id="tab-my-quizzes" class="hidden space-y-6">
-                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl">
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-bold text-slate-100">📂 Bộ Đề Trắc Nghiệm Của Tôi (Riêng Tư)</h3>
+                            <h3 class="text-base font-bold">📂 Bộ Đề Trắc Nghiệm Của Tôi (Riêng Tư)</h3>
                             <button onclick="showUploadSection()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-colors shadow-lg">
                                 ➕ Tạo Bộ Đề Mới
                             </button>
                         </div>
                         <div id="myQuizList" class="space-y-3">
-                            <p class="text-slate-400 text-xs">Đang tải dữ liệu từ đám mây...</p>
+                            <p class="text-xs text-label">Đang tải dữ liệu từ đám mây...</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB 3: THƯ VIỆN ĐỀ THI CHUNG -->
                 <div id="tab-public-library" class="hidden space-y-6">
-                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl">
-                        <h3 class="text-base font-bold text-slate-100 mb-4">🌐 Thư Viện Đề Thi Chung (Đã Công Khai)</h3>
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl">
+                        <h3 class="text-base font-bold mb-4">🌐 Thư Viện Đề Thi Chung (Đã Công Khai)</h3>
                         <div id="publicQuizList" class="space-y-3">
-                            <p class="text-slate-400 text-xs">Đang tải thư viện chung...</p>
+                            <p class="text-xs text-label">Đang tải thư viện chung...</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB 4: THƯ VIỆN TÀI LIỆU CHIA SẺ -->
                 <div id="tab-documents-library" class="hidden space-y-6">
-                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl space-y-6">
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-6">
                         <div class="flex justify-between items-center flex-wrap gap-4">
                             <div>
-                                <h3 class="text-base font-bold text-slate-100">📚 Thư Viện Tài Liệu Chia Sẻ</h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Kho tài liệu PDF, Word, PowerPoint hoặc Link học tập từ cộng đồng.</p>
+                                <h3 class="text-base font-bold">📚 Thư Viện Tài Liệu Chia Sẻ</h3>
+                                <p class="text-xs mt-0.5 text-label">Kho tài liệu PDF, Word, PowerPoint hoặc Link học tập từ cộng đồng.</p>
                             </div>
                             <button onclick="openShareDocModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-colors shadow-lg flex items-center gap-2">
                                 📤 Chia Sẻ Tài Liệu Mới
@@ -163,16 +184,16 @@
                         </div>
 
                         <div id="sharedDocsList" class="space-y-3">
-                            <p class="text-slate-400 text-xs">Đang tải danh sách tài liệu...</p>
+                            <p class="text-xs text-label">Đang tải danh sách tài liệu...</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB 5: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
-                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl space-y-4">
-                        <h3 class="text-base font-bold text-slate-100">⚙️ Cài Đặt Hệ Thống</h3>
-                        <div class="space-y-3 text-sm text-slate-300">
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4">
+                        <h3 class="text-base font-bold">⚙️ Cài Đặt Hệ Thống</h3>
+                        <div class="space-y-3 text-sm text-label">
                             <p>• Tài khoản đang đăng nhập: <b class="text-cyan-400" id="settingsUsername">---</b></p>
                             <p>• Cơ sở dữ liệu đám mây: <b class="text-teal-400">Firebase Firestore (Active)</b></p>
                             <p>• Trạng thái ghi nhớ: <b class="text-teal-400">Tự động lưu tài khoản & API Key</b></p>
@@ -181,25 +202,25 @@
                 </div>
 
                 <!-- KHUNG TẠO BÀI MỚI (TRẮC NGHIỆM) -->
-                <div id="setupSection" class="hidden bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl">
+                <div id="setupSection" class="hidden theme-card border rounded-2xl p-6 shadow-xl">
                     <h1 class="text-xl font-bold text-cyan-400 mb-2">Tạo Bộ Trắc Nghiệm Mới</h1>
-                    <p class="text-slate-300 text-xs mb-6">Quét tài liệu PDF hoặc TXT để tạo bộ đề lưu an toàn vào tài khoản đám mây của bạn.</p>
+                    <p class="text-xs mb-6 text-label">Quét tài liệu PDF hoặc TXT để tạo bộ đề lưu an toàn vào tài khoản đám mây của bạn.</p>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Tên bộ trắc nghiệm:</label>
-                            <input type="text" id="quizTitleInput" placeholder="Ví dụ: Ôn thi Kinh tế chính trị - Chương 1" class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                            <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Tên bộ trắc nghiệm:</label>
+                            <input type="text" id="quizTitleInput" placeholder="Ví dụ: Ôn thi Kinh tế chính trị - Chương 1" class="w-full theme-input border rounded-xl px-4 py-3 outline-none text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Gemini API Key của bạn (Được tự động lưu):</label>
-                            <input type="password" id="apiKey" placeholder="Nhập AIzaSy..." class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                            <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Gemini API Key của bạn (Được tự động lưu):</label>
+                            <input type="password" id="apiKey" placeholder="Nhập AIzaSy..." class="w-full theme-input border rounded-xl px-4 py-3 outline-none text-sm">
                         </div>
 
-                        <div class="border-2 border-dashed border-[#4a4a4a] rounded-xl p-6 text-center bg-[#1C1C1C] hover:border-cyan-500/50 transition-colors cursor-pointer">
+                        <div class="border-2 border-dashed rounded-xl p-6 text-center theme-input hover:border-cyan-500/50 transition-colors cursor-pointer">
                             <input type="file" id="fileInput" accept=".txt,.pdf" class="hidden">
                             <label for="fileInput" class="cursor-pointer flex flex-col items-center justify-center">
-                                <span class="text-slate-200 font-medium text-sm">Nhấn để chọn file PDF hoặc TXT tài liệu</span>
-                                <span class="text-xs text-slate-400 mt-1" id="fileName">Chưa chọn file nào</span>
+                                <span class="font-medium text-sm">Nhấn để chọn file PDF hoặc TXT tài liệu</span>
+                                <span class="text-xs mt-1 text-label" id="fileName">Chưa chọn file nào</span>
                             </label>
                         </div>
 
@@ -207,7 +228,7 @@
                             <button id="generateBtn" class="flex-1 bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold py-3 rounded-xl transition-colors text-sm shadow-lg">
                                 Quét & Lưu Lên Đám Mây
                             </button>
-                            <button onclick="hideUploadSection()" class="bg-[#1C1C1C] hover:bg-[#4a4a4a] text-slate-300 font-bold px-6 py-3 rounded-xl text-sm border border-[#4a4a4a]">
+                            <button onclick="hideUploadSection()" class="theme-btn font-bold px-6 py-3 rounded-xl text-sm border">
                                 Hủy
                             </button>
                         </div>
@@ -215,21 +236,21 @@
                 </div>
 
                 <!-- Màn hình Loading -->
-                <div id="loadingIndicator" class="hidden flex-col items-center justify-center py-10 bg-[#363636] border border-[#4a4a4a] rounded-2xl shadow-xl p-6">
+                <div id="loadingIndicator" class="hidden flex-col items-center justify-center py-10 theme-card border rounded-2xl shadow-xl p-6">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-400 mb-4"></div>
                     <p id="loadingText" class="text-cyan-400 font-medium text-sm animate-pulse text-center">Đang xử lý...</p>
                 </div>
 
                 <!-- GIAO DIỆN LÀM BÀI (QUIZ) -->
                 <div id="quizArea" class="hidden space-y-6">
-                    <div id="scoreBoard" class="sticky top-4 z-40 bg-[#363636]/95 backdrop-blur-md border border-[#4a4a4a] rounded-2xl p-4 flex justify-between items-center shadow-xl">
+                    <div id="scoreBoard" class="sticky top-4 z-40 backdrop-blur-md theme-card border rounded-2xl p-4 flex justify-between items-center shadow-xl">
                         <div>
-                            <h2 id="activeQuizTitle" class="text-base font-bold text-slate-100">Tên Bài Học</h2>
-                            <p class="text-xs text-slate-300">Đã trả lời: <span id="answeredCount">0</span> / <span id="totalCount">0</span></p>
+                            <h2 id="activeQuizTitle" class="text-base font-bold">Tên Bài Học</h2>
+                            <p class="text-xs text-label">Đã trả lời: <span id="answeredCount">0</span> / <span id="totalCount">0</span></p>
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="text-xl font-black text-cyan-400"><span id="scoreCount">0</span> Điểm</div>
-                            <button onclick="backToDashboard()" class="text-xs bg-[#1C1C1C] hover:bg-[#4a4a4a] text-slate-300 px-3 py-2 rounded-xl font-medium border border-[#4a4a4a]">Quay lại</button>
+                            <button onclick="backToDashboard()" class="text-xs theme-btn px-3 py-2 rounded-xl font-medium border">Quay lại</button>
                         </div>
                     </div>
                     <div id="quizContainer" class="space-y-4 mb-20"></div>
@@ -241,25 +262,25 @@
 
     <!-- MODAL CHIA SẺ TÀI LIỆU -->
     <div id="shareDocModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
-            <div class="flex justify-between items-center border-b border-[#4a4a4a] pb-3">
+        <div class="theme-card border rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: inherit;">
                 <h3 class="text-base font-bold text-cyan-400">Chia Sẻ Tài Liệu Học Tập</h3>
-                <button onclick="closeShareDocModal()" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+                <button onclick="closeShareDocModal()" class="text-lg font-bold">&times;</button>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Tên tài liệu / Tiêu đề:</label>
-                    <input type="text" id="docTitleInput" placeholder="Ví dụ: Tổng hợp công thức Toán cao cấp" class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-2.5 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                    <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Tên tài liệu / Tiêu đề:</label>
+                    <input type="text" id="docTitleInput" placeholder="Ví dụ: Tổng hợp công thức Toán cao cấp" class="w-full theme-input border rounded-xl px-4 py-2.5 outline-none text-sm">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Hình thức chia sẻ:</label>
+                    <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Hình thức chia sẻ:</label>
                     <div class="flex gap-4 mb-2">
-                        <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                        <label class="flex items-center gap-2 text-xs cursor-pointer text-label">
                             <input type="radio" name="docType" value="file" checked onclick="toggleDocInputMode('file')" class="text-cyan-500"> Tải file (PDF, Word, PPT)
                         </label>
-                        <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                        <label class="flex items-center gap-2 text-xs cursor-pointer text-label">
                             <input type="radio" name="docType" value="link" onclick="toggleDocInputMode('link')" class="text-cyan-500"> Đường dẫn (Link)
                         </label>
                     </div>
@@ -267,10 +288,10 @@
 
                 <!-- Khung Tải File -->
                 <div id="docFileBox">
-                    <div class="border-2 border-dashed border-[#4a4a4a] rounded-xl p-4 text-center bg-[#1C1C1C] hover:border-cyan-500/50 transition-colors cursor-pointer">
+                    <div class="border-2 border-dashed rounded-xl p-4 text-center theme-input hover:border-cyan-500/50 transition-colors cursor-pointer">
                         <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden">
                         <label for="docFileInput" class="cursor-pointer flex flex-col items-center justify-center">
-                            <span class="text-slate-200 font-medium text-xs">Chọn file PDF, Word (.doc/.docx) hoặc PPT (.ppt/.pptx)</span>
+                            <span class="font-medium text-xs">Chọn file PDF, Word (.doc/.docx) hoặc PPT (.ppt/.pptx)</span>
                             <span class="text-[11px] text-cyan-400 mt-1" id="docFileName">Chưa chọn file nào</span>
                         </label>
                     </div>
@@ -278,36 +299,36 @@
 
                 <!-- Khung Nhập Link -->
                 <div id="docLinkBox" class="hidden">
-                    <input type="url" id="docLinkInput" placeholder="Dán link Google Drive, OneDrive hoặc tài liệu web..." class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-2.5 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                    <input type="url" id="docLinkInput" placeholder="Dán link Google Drive, OneDrive hoặc tài liệu web..." class="w-full theme-input border rounded-xl px-4 py-2.5 outline-none text-sm">
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button onclick="closeShareDocModal()" class="bg-[#1C1C1C] hover:bg-[#4a4a4a] text-slate-300 px-4 py-2 rounded-xl text-xs font-bold border border-[#4a4a4a]">Hủy</button>
+                    <button onclick="closeShareDocModal()" class="theme-btn px-4 py-2 rounded-xl text-xs font-bold border">Hủy</button>
                     <button onclick="uploadAndShareDocument()" id="uploadDocBtn" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold shadow">Chia Sẻ Ngay</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CUSTOM ALERT MODAL (THAY THẾ CHO ALERT() MẶC ĐỊNH) -->
+    <!-- CUSTOM ALERT MODAL -->
     <div id="customAlertModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4 text-center">
+        <div class="theme-card border rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4 text-center">
             <h3 id="alertTitle" class="text-base font-bold text-cyan-400">Thông Báo</h3>
-            <p id="alertMessage" class="text-sm text-slate-200 leading-relaxed"></p>
+            <p id="alertMessage" class="text-sm leading-relaxed text-label"></p>
             <button onclick="closeAlertModal()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-2.5 rounded-xl text-xs font-bold shadow transition-colors">OK</button>
         </div>
     </div>
 
     <!-- CUSTOM CONFIRM MODAL -->
     <div id="customModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
-            <div class="flex justify-between items-center border-b border-[#4a4a4a] pb-3">
+        <div class="theme-card border rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: inherit;">
                 <h3 id="modalTitle" class="text-base font-bold text-cyan-400">Xác nhận thao tác</h3>
-                <button onclick="closeModal(false)" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+                <button onclick="closeModal(false)" class="text-lg font-bold">&times;</button>
             </div>
-            <p id="modalMessage" class="text-sm text-slate-300 leading-relaxed">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            <p id="modalMessage" class="text-sm leading-relaxed text-label">Bạn có chắc chắn muốn thực hiện hành động này?</p>
             <div class="flex justify-end gap-3 pt-2">
-                <button id="modalCancelBtn" onclick="closeModal(false)" class="bg-[#1C1C1C] hover:bg-[#4a4a4a] text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-colors border border-[#4a4a4a]">Hủy</button>
+                <button id="modalCancelBtn" onclick="closeModal(false)" class="theme-btn px-4 py-2 rounded-xl text-xs font-bold transition-colors border">Hủy</button>
                 <button id="modalConfirmBtn" onclick="closeModal(true)" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold transition-colors shadow-lg">Xác Nhận</button>
             </div>
         </div>
@@ -337,7 +358,131 @@
         let modalCallback = null;
         let selectedDocFile = null;
 
-        // --- HÀM HIỂN THỊ THÔNG BÁO CHUẨN CHESS IT UP ---
+        // --- QUẢN LÝ LIGHT / DARK MODE ---
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const bodyEl = document.body;
+            
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                bodyEl.classList.remove('dark');
+                localStorage.setItem('quiz_theme', 'light');
+                applyThemeStyles('light');
+            } else {
+                htmlEl.classList.add('dark');
+                bodyEl.classList.add('dark');
+                localStorage.setItem('quiz_theme', 'dark');
+                applyThemeStyles('dark');
+            }
+        }
+
+        function applyThemeStyles(theme) {
+            const topHeader = document.getElementById('topHeader');
+            const sidebar = document.getElementById('sidebar');
+            const themeBtn = document.getElementById('themeToggleBtn');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+
+            if (theme === 'light') {
+                topHeader.style.backgroundColor = '#ffffff';
+                topHeader.style.borderColor = '#e2e8f0';
+                sidebar.style.backgroundColor = '#ffffff';
+                sidebar.style.borderColor = '#e2e8f0';
+                themeBtn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-colors";
+                themeIcon.innerText = "🌙";
+                themeText.innerText = "Dark Mode";
+
+                document.querySelectorAll('.theme-card').forEach(el => {
+                    el.style.backgroundColor = '#ffffff';
+                    el.style.borderColor = '#e2e8f0';
+                    el.style.color = '#0f172a';
+                });
+                document.querySelectorAll('.theme-input').forEach(el => {
+                    el.style.backgroundColor = '#f8fafc';
+                    el.style.borderColor = '#cbd5e1';
+                    el.style.color = '#0f172a';
+                });
+                document.querySelectorAll('.theme-btn').forEach(el => {
+                    el.style.backgroundColor = '#f1f5f9';
+                    el.style.borderColor = '#cbd5e1';
+                    el.style.color = '#334155';
+                });
+                document.querySelectorAll('.text-label').forEach(el => {
+                    el.style.color = '#64748b';
+                });
+            } else {
+                topHeader.style.backgroundColor = '#1C1C1C';
+                topHeader.style.borderColor = '#4a4a4a';
+                sidebar.style.backgroundColor = '#363636';
+                sidebar.style.borderColor = '#4a4a4a';
+                themeBtn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow bg-[#363636] hover:bg-[#444444] text-slate-200 border border-[#4a4a4a] transition-colors";
+                themeIcon.innerText = "☀️";
+                themeText.innerText = "Light Mode";
+
+                document.querySelectorAll('.theme-card').forEach(el => {
+                    el.style.backgroundColor = '#363636';
+                    el.style.borderColor = '#4a4a4a';
+                    el.style.color = '#f8fafc';
+                });
+                document.querySelectorAll('.theme-input').forEach(el => {
+                    el.style.backgroundColor = '#1C1C1C';
+                    el.style.borderColor = '#4a4a4a';
+                    el.style.color = '#f8fafc';
+                });
+                document.querySelectorAll('.theme-btn').forEach(el => {
+                    el.style.backgroundColor = '#1C1C1C';
+                    el.style.borderColor = '#4a4a4a';
+                    el.style.color = '#cbd5e1';
+                });
+                document.querySelectorAll('.text-label').forEach(el => {
+                    el.style.color = '#cbd5e1';
+                });
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedTheme = localStorage.getItem('quiz_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+                applyThemeStyles('light');
+            } else {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+                applyThemeStyles('dark');
+            }
+
+            const savedUser = localStorage.getItem('quiz_current_user');
+            const savedApiKey = localStorage.getItem('quiz_gemini_apikey');
+            
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+
+            if (savedUser) {
+                const userRef = db.collection('users').doc(savedUser);
+                const doc = await userRef.get();
+                if (doc.exists) {
+                    currentUser = savedUser;
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('mainApp').classList.remove('hidden');
+                    document.getElementById('sidebarUsername').innerText = savedUser;
+                    document.getElementById('settingsUsername').innerText = savedUser;
+
+                    if (doc.data().isAdmin) {
+                        document.getElementById('sidebarAdminBadge').classList.remove('hidden');
+                        document.getElementById('adminDashboard').classList.remove('hidden');
+                        loadAdminPanel();
+                    }
+
+                    switchTab('home');
+                    loadMyQuizzes();
+                    loadPublicQuizzes();
+                    loadSharedDocuments();
+                }
+            }
+        });
+
         function showAlertModal(message, title = "Thông Báo") {
             document.getElementById('alertTitle').innerText = title;
             document.getElementById('alertMessage').innerText = message;
@@ -372,46 +517,13 @@
         }
         initAdminAccount();
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            const savedUser = localStorage.getItem('quiz_current_user');
-            const savedApiKey = localStorage.getItem('quiz_gemini_apikey');
-            
-            if (savedApiKey) {
-                document.getElementById('apiKey').value = savedApiKey;
-            }
-
-            if (savedUser) {
-                const userRef = db.collection('users').doc(savedUser);
-                const doc = await userRef.get();
-                if (doc.exists) {
-                    currentUser = savedUser;
-                    document.getElementById('authSection').classList.add('hidden');
-                    document.getElementById('mainApp').classList.remove('hidden');
-                    document.getElementById('sidebarUsername').innerText = savedUser;
-                    document.getElementById('settingsUsername').innerText = savedUser;
-
-                    if (doc.data().isAdmin) {
-                        document.getElementById('sidebarAdminBadge').classList.remove('hidden');
-                        document.getElementById('adminDashboard').classList.remove('hidden');
-                        loadAdminPanel();
-                    }
-
-                    switchTab('home');
-                    loadMyQuizzes();
-                    loadPublicQuizzes();
-                    loadSharedDocuments();
-                }
-            }
-        });
-
         function switchTab(tabName) {
             ['home', 'my-quizzes', 'public-library', 'documents-library', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const nav = document.getElementById(`nav-${t}`);
                 if(el) el.classList.add('hidden');
                 if(nav) {
-                    nav.classList.remove('bg-[#444444]', 'text-cyan-400');
-                    nav.classList.add('text-slate-300');
+                    nav.classList.remove('bg-[#444444]', 'bg-slate-200', 'text-cyan-400', 'text-cyan-600');
                 }
             });
 
@@ -419,8 +531,8 @@
             const activeNav = document.getElementById(`nav-${tabName}`);
             if(activeTab) activeTab.classList.remove('hidden');
             if(activeNav) {
-                activeNav.classList.add('bg-[#444444]', 'text-cyan-400');
-                activeNav.classList.remove('text-slate-300');
+                const isLight = !document.body.classList.contains('dark');
+                activeNav.classList.add(isLight ? 'bg-slate-200' : 'bg-[#444444]', isLight ? 'text-cyan-600' : 'text-cyan-400');
             }
 
             hideUploadSection();
@@ -499,11 +611,11 @@
                 let data = doc.data();
                 let userId = doc.id;
                 let div = document.createElement('div');
-                div.className = 'bg-[#1C1C1C] p-2.5 rounded-lg border border-[#4a4a4a] mb-1.5 flex justify-between items-center text-xs';
+                div.className = 'theme-input p-2.5 rounded-lg border mb-1.5 flex justify-between items-center text-xs';
                 
                 let deleteBtnHtml = '';
                 if (userId !== 'admin') {
-                    deleteBtnHtml = `<button onclick="confirmDeleteUser('${userId}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
+                    deleteBtnHtml = `<button onclick="confirmDeleteUser('${userId}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
                 } else {
                     deleteBtnHtml = `<span class="text-red-400 font-bold">Bảo vệ</span>`;
                 }
@@ -511,7 +623,7 @@
                 div.innerHTML = `
                     <div class="flex items-center gap-2">
                         <span>👤 <b>${userId}</b></span>
-                        <span class="text-slate-400 text-[10px]">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'})</span>
+                        <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'})</span>
                     </div>
                     <div>${deleteBtnHtml}</div>
                 `;
@@ -614,7 +726,7 @@
             let listDiv = document.getElementById('sharedDocsList');
 
             if (snapshot.empty) {
-                listDiv.innerHTML = '<p class="text-slate-400 text-xs">Chưa có tài liệu nào được chia sẻ trong thư viện.</p>';
+                listDiv.innerHTML = '<p class="text-xs text-label">Chưa có tài liệu nào được chia sẻ trong thư viện.</p>';
                 return;
             }
 
@@ -623,7 +735,7 @@
                 let data = doc.data();
                 let id = doc.id;
                 let item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-3 bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl hover:border-slate-500 transition-colors';
+                item.className = 'flex justify-between items-center p-3 theme-input border rounded-xl transition-colors';
                 
                 let actionBtn = '';
                 if (data.type === 'file' && data.fileData) {
@@ -633,12 +745,12 @@
                 }
 
                 let deleteBtn = (currentUser === 'admin' || currentUser === data.author) ? 
-                    `<button onclick="confirmDeleteDoc('${id}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : '';
+                    `<button onclick="confirmDeleteDoc('${id}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : '';
 
                 item.innerHTML = `
                     <div>
-                        <h4 class="font-bold text-slate-200 text-sm">${data.title}</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Chia sẻ bởi: <span class="text-cyan-400 font-medium">@${data.author}</span> • Loại: <span class="text-teal-400 uppercase">${data.type}</span></p>
+                        <h4 class="font-bold text-sm">${data.title}</h4>
+                        <p class="text-[11px] mt-0.5 text-label">Chia sẻ bởi: <span class="text-cyan-400 font-medium">@${data.author}</span> • Loại: <span class="text-teal-400 uppercase">${data.type}</span></p>
                     </div>
                     <div class="flex gap-2 items-center">
                         ${actionBtn}
@@ -665,7 +777,7 @@
             let listDiv = document.getElementById('myQuizList');
 
             if (snapshot.empty) {
-                listDiv.innerHTML = '<p class="text-slate-400 text-xs">Bạn chưa tạo bộ đề cá nhân nào.</p>';
+                listDiv.innerHTML = '<p class="text-xs text-label">Bạn chưa tạo bộ đề cá nhân nào.</p>';
                 return;
             }
 
@@ -674,16 +786,16 @@
                 let quiz = doc.data();
                 let id = doc.id;
                 let item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-3 bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl hover:border-slate-500 transition-colors';
+                item.className = 'flex justify-between items-center p-3 theme-input border rounded-xl transition-colors';
                 item.innerHTML = `
                     <div>
-                        <h4 class="font-bold text-slate-200 text-sm">${quiz.title}</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">${quiz.questions.length} câu • ${quiz.shared ? '<span class="text-teal-400 font-bold">Đã công khai</span>' : '<span class="text-amber-400 font-medium">Riêng tư</span>'}</p>
+                        <h4 class="font-bold text-sm">${quiz.title}</h4>
+                        <p class="text-[11px] mt-0.5 text-label">${quiz.questions.length} câu • ${quiz.shared ? '<span class="text-teal-400 font-bold">Đã công khai</span>' : '<span class="text-amber-400 font-medium">Riêng tư</span>'}</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="startMyQuiz('${id}')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Làm Bài</button>
                         ${!quiz.shared ? `<button onclick="shareQuiz('${id}')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">🌐 Chia Sẻ</button>` : ''}
-                        <button onclick="confirmDeleteMyQuiz('${id}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>
+                        <button onclick="confirmDeleteMyQuiz('${id}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>
                     </div>
                 `;
                 listDiv.appendChild(item);
@@ -725,7 +837,7 @@
             let listDiv = document.getElementById('publicQuizList');
 
             if (snapshot.empty) {
-                listDiv.innerHTML = '<p class="text-slate-400 text-xs">Chưa có bộ đề nào được công khai chia sẻ.</p>';
+                listDiv.innerHTML = '<p class="text-xs text-label">Chưa có bộ đề nào được công khai chia sẻ.</p>';
                 return;
             }
 
@@ -734,15 +846,15 @@
                 let quiz = doc.data();
                 let id = doc.id;
                 let item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-3 bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl hover:border-slate-500 transition-colors';
+                item.className = 'flex justify-between items-center p-3 theme-input border rounded-xl transition-colors';
                 item.innerHTML = `
                     <div>
-                        <h4 class="font-bold text-slate-200 text-sm">${quiz.title}</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Chia sẻ bởi: <span class="text-cyan-400 font-medium">@${quiz.author}</span> • ${quiz.questions.length} câu</p>
+                        <h4 class="font-bold text-sm">${quiz.title}</h4>
+                        <p class="text-[11px] mt-0.5 text-label">Chia sẻ bởi: <span class="text-cyan-400 font-medium">@${quiz.author}</span> • ${quiz.questions.length} câu</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="startPublicQuiz('${id}')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Làm Bài</button>
-                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="confirmDeletePublicQuiz('${id}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : ''}
+                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="confirmDeletePublicQuiz('${id}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : ''}
                     </div>
                 `;
                 listDiv.appendChild(item);
@@ -919,10 +1031,10 @@
 
             questions.forEach((q, qIndex) => {
                 const qDiv = document.createElement('div');
-                qDiv.className = 'bg-[#363636] border border-[#4a4a4a] p-6 rounded-2xl shadow-xl';
+                qDiv.className = 'theme-card border p-6 rounded-2xl shadow-xl';
 
                 const questionTitle = document.createElement('h3');
-                questionTitle.className = 'text-base font-bold text-slate-100 mb-4 leading-relaxed';
+                questionTitle.className = 'text-base font-bold mb-4 leading-relaxed';
                 questionTitle.innerText = `Câu ${qIndex + 1}: ${q.question}`;
                 qDiv.appendChild(questionTitle);
 
@@ -931,16 +1043,16 @@
 
                 q.options.forEach((opt) => {
                     const label = document.createElement('label');
-                    label.className = 'option-label flex items-center p-4 border border-[#4a4a4a] rounded-xl cursor-pointer bg-[#1C1C1C]';
+                    label.className = 'option-label flex items-center p-4 border rounded-xl cursor-pointer theme-input';
                     
                     const radio = document.createElement('input');
                     radio.type = 'radio';
                     radio.name = `question_${qIndex}`;
                     radio.value = opt;
-                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-400 border-[#4a4a4a] mr-3 bg-[#1C1C1C]';
+                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-400 mr-3';
 
                     const textSpan = document.createElement('span');
-                    textSpan.className = 'text-slate-200 font-medium text-sm';
+                    textSpan.className = 'font-medium text-sm';
                     textSpan.innerText = opt;
 
                     radio.addEventListener('change', () => {
@@ -965,7 +1077,6 @@
                         allLabels.forEach(l => {
                             const radioValue = l.querySelector('input').value;
                             if (radioValue === q.correctAnswer) {
-                                l.classList.remove('bg-[#1C1C1C]', 'border-[#4a4a4a]');
                                 l.classList.add('bg-teal-950/60', 'border-teal-500', 'text-teal-200');
                                 const checkIcon = document.createElement('span');
                                 checkIcon.innerHTML = '✔';
@@ -973,7 +1084,6 @@
                                 l.appendChild(checkIcon);
                             } 
                             else if (radioValue === opt && !isCorrect) {
-                                l.classList.remove('bg-[#1C1C1C]', 'border-[#4a4a4a]');
                                 l.classList.add('bg-red-950/60', 'border-red-500', 'text-red-200');
                                 const crossIcon = document.createElement('span');
                                 crossIcon.innerHTML = '❌';
