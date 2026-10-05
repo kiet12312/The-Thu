@@ -12,15 +12,44 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
-        /* --- BASE STYLES (LIGHT MODE) --- */
-        body { background-color: #f1f5f9; color: #0f172a; transition: background 0.5s ease; }
-        .theme-header, .theme-sidebar { background-color: #ffffff; border-color: #e2e8f0; }
-        .theme-card { background-color: #ffffff; border-color: #e2e8f0; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .theme-input { background-color: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
-        .theme-btn { background-color: #ffffff; border-color: #cbd5e1; color: #334155; }
-        .text-label { color: #475569; }
+        /* --- GENERAL STYLES --- */
+        body { transition: background 0.5s ease, color 0.5s ease; }
 
-        /* --- GEMINI DARK MODE EFFECT --- */
+        /* --- LIGHT MODE (GLASSMORPHISM & GRADIENT) --- */
+        body:not(.dark) { 
+            background-color: #f8fafc; 
+            background-image: radial-gradient(circle at 50% 0%, rgba(186, 230, 253, 0.7) 0%, rgba(248, 250, 252, 1) 65%);
+            background-attachment: fixed;
+            color: #0f172a; 
+        }
+        body:not(.dark) .theme-header, 
+        body:not(.dark) .theme-sidebar { 
+            background-color: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border-color: rgba(226, 232, 240, 0.6); 
+        }
+        body:not(.dark) .theme-card { 
+            background-color: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border-color: rgba(255, 255, 255, 0.8); 
+            color: #0f172a; 
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.05);
+        }
+        body:not(.dark) .theme-input { 
+            background-color: rgba(241, 245, 249, 0.5); 
+            border-color: rgba(203, 213, 225, 0.6); 
+            color: #0f172a; 
+        }
+        body:not(.dark) .theme-btn { 
+            background-color: rgba(255, 255, 255, 0.6); 
+            border-color: rgba(203, 213, 225, 0.8); 
+            color: #334155; 
+        }
+        body:not(.dark) .text-label { color: #475569; }
+
+        /* --- DARK MODE (GLASSMORPHISM & GRADIENT) --- */
         body.dark { 
             background-color: #131314; 
             background-image: radial-gradient(circle at 50% 40%, rgba(37, 65, 114, 0.45) 0%, #131314 65%);
@@ -57,10 +86,11 @@
         /* SCROLLBAR & INTERACTIONS */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a4a4a; border-radius: 4px; }
+        body:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; }
         
         .option-label { transition: all 0.3s ease-in-out; }
         body.dark .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.05); border-color: #06b6d4; transform: translateX(6px); }
-        body:not(.dark) .option-label:not(.disabled):hover { background-color: #e2e8f0; border-color: #06b6d4; transform: translateX(6px); }
+        body:not(.dark) .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.4); border-color: #06b6d4; transform: translateX(6px); }
         .disabled { pointer-events: none; opacity: 0.9; }
 
         /* THEME SWITCH TOGGLE */
@@ -113,7 +143,7 @@
                 <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2 group cursor-pointer">
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow border transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
-                    <span class="font-bold text-lg tracking-wider transition-colors duration-300 group-hover:text-cyan-400">TheThuu</span>
+                    <span class="font-bold text-lg tracking-wider transition-colors duration-300 group-hover:text-cyan-500">TheThuu</span>
                 </div>
 
                 <!-- Menu Navigation -->
@@ -151,14 +181,14 @@
                                 <!-- Render Avatar here -->
                             </div>
                             <div class="overflow-hidden">
-                                <span class="text-xs font-bold truncate block max-w-[90px] transition-colors duration-300 group-hover:text-cyan-400" id="sidebarUsername">User</span>
+                                <span class="text-xs font-bold truncate block max-w-[90px] transition-colors duration-300 group-hover:text-cyan-500" id="sidebarUsername">User</span>
                                 <span class="text-[10px] text-cyan-500 group-hover:underline">Đổi avatar</span>
                             </div>
                         </div>
-                        <span id="sidebarAdminBadge" class="hidden bg-red-500/20 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-red-500/30">ADMIN</span>
+                        <span id="sidebarAdminBadge" class="hidden bg-red-500/20 text-red-500 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-red-500/30">ADMIN</span>
                     </div>
                     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
-                    <button onclick="logout()" class="w-full btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium py-1.5 rounded-lg text-xs transition-colors border border-red-500/20">
+                    <button onclick="logout()" class="w-full btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 font-medium py-1.5 rounded-lg text-xs transition-colors border border-red-500/20">
                         Đăng Xuất
                     </button>
                 </div>
@@ -172,19 +202,19 @@
             <div class="md:hidden flex justify-between items-center p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500">
                 <div class="flex items-center gap-2">
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
-                    <span class="font-bold text-cyan-400">TheThuu</span>
+                    <span class="font-bold text-cyan-500">TheThuu</span>
                 </div>
                 <div class="flex gap-2 items-center">
                     <div class="theme-switch dark-switch scale-75 origin-right" onclick="toggleTheme()">
                         <div class="theme-switch-handle"><span class="text-xs">🌙</span></div>
                     </div>
-                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded-lg btn-interactive">Đăng Xuất</button>
+                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded-lg btn-interactive">Đăng Xuất</button>
                 </div>
             </div>
 
             <!-- KHUNG ĐĂNG NHẬP / ĐĂNG KÝ -->
             <div id="authSection" class="theme-card rounded-2xl p-8 max-w-md mx-auto my-auto shadow-2xl w-full border animate-pop-in transition-colors duration-500">
-                <h2 id="authTitle" class="text-2xl font-bold text-cyan-400 mb-6 text-center">Đăng Nhập Tài Khoản</h2>
+                <h2 id="authTitle" class="text-2xl font-bold text-cyan-500 mb-6 text-center">Đăng Nhập Tài Khoản</h2>
                 
                 <div class="space-y-4">
                     <div>
@@ -202,7 +232,7 @@
 
                     <p class="text-center text-xs mt-4 text-label transition-colors">
                         <span id="authToggleText">Chưa có tài khoản?</span> 
-                        <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-cyan-400 font-bold hover:underline ml-1 transition-colors">Đăng ký ngay</button>
+                        <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-cyan-500 font-bold hover:underline ml-1 transition-colors">Đăng ký ngay</button>
                     </p>
                 </div>
             </div>
@@ -213,7 +243,7 @@
                 <!-- TAB 1: TRANG CHỦ -->
                 <div id="tab-home" class="space-y-6 animate-fade-in">
                     <div id="adminDashboard" class="hidden theme-card border border-red-500/30 rounded-2xl p-6 shadow-xl space-y-4 transition-colors duration-500 hover-lift">
-                        <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
+                        <h3 class="text-lg font-bold text-red-500 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
                         <p class="text-xs text-label">Quản lý tài khoản thành viên và xem hòm thư góp ý báo lỗi từ người dùng.</p>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,14 +252,14 @@
                                 <div id="adminUserList" class="space-y-1.5 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
                             </div>
                             <div class="theme-input border p-4 rounded-xl transition-colors duration-500">
-                                <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-cyan-400">📥 Hòm Thư Góp Ý & Báo Lỗi</h4>
+                                <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-cyan-500">📥 Hòm Thư Góp Ý & Báo Lỗi</h4>
                                 <div id="adminFeedbackList" class="space-y-2 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="theme-card border rounded-2xl p-8 shadow-xl text-center space-y-5 transition-colors duration-500 hover-lift">
-                        <h2 class="text-3xl font-bold text-cyan-400">Chào mừng bạn quay trở lại!</h2>
+                        <h2 class="text-3xl font-bold text-cyan-500">Chào mừng bạn quay trở lại!</h2>
                         <p class="text-sm max-w-lg mx-auto text-label leading-relaxed">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, tham gia chat cộng đồng hoặc gửi góp ý báo lỗi trực tiếp.</p>
                         <button onclick="switchTab('my-quizzes'); showUploadSection();" class="inline-block btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl text-sm transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/40 hover:-translate-y-1">
                             ➕ Tạo Bộ Đề Mới Ngay
@@ -281,15 +311,15 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: CHAT (TAG POPUP + MŨI TÊN + THU HỒI & ADMIN XÓA) -->
+                <!-- TAB 5: CHAT -->
                 <div id="tab-global-chat" class="hidden flex-1 flex flex-col">
                     <div class="theme-card border rounded-2xl shadow-xl flex flex-col h-[calc(100vh-140px)] p-6 relative transition-colors duration-500">
                         <div class="border-b pb-3 mb-4 flex justify-between items-center border-slate-500/20">
                             <div>
-                                <h3 class="text-lg font-bold text-cyan-400 transition-colors">Phòng Chat Cộng Đồng</h3>
+                                <h3 class="text-lg font-bold text-cyan-500 transition-colors">Phòng Chat Cộng Đồng</h3>
                                 <p class="text-xs text-label transition-colors">Trao đổi và thảo luận trực tuyến.</p>
                             </div>
-                            <span class="text-xs text-teal-400 font-medium flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span> Trực tuyến</span>
+                            <span class="text-xs text-teal-500 font-medium flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span> Trực tuyến</span>
                         </div>
 
                         <!-- Khung chứa tin nhắn -->
@@ -306,10 +336,10 @@
                         <!-- Khu vực hiển thị khi đang Trả lời (Reply) tin nhắn -->
                         <div id="replyPreviewBox" class="hidden theme-input border rounded-xl p-3 mb-2 flex justify-between items-center text-xs animate-slide-up transition-colors duration-500">
                             <div>
-                                <span class="text-cyan-400 font-bold">Đang trả lời <span id="replyingToUser"></span>:</span>
+                                <span class="text-cyan-500 font-bold">Đang trả lời <span id="replyingToUser"></span>:</span>
                                 <p id="replyingToText" class="text-label truncate max-w-md mt-0.5"></p>
                             </div>
-                            <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-200 font-bold px-2 text-base transition-colors">&times;</button>
+                            <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-500 font-bold px-2 text-base transition-colors">&times;</button>
                         </div>
 
                         <!-- Khung soạn tin nhắn -->
@@ -324,7 +354,7 @@
                 <div id="tab-feedback" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6 transition-colors duration-500 hover-lift">
                         <div class="text-center space-y-2">
-                            <h3 class="text-xl font-bold text-cyan-400">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <h3 class="text-xl font-bold text-cyan-500">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
                             <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
                         </div>
 
@@ -349,17 +379,17 @@
                     <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4 transition-colors duration-500 hover-lift">
                         <h3 class="text-lg font-bold">⚙️ Cài Đặt Hệ Thống</h3>
                         <div class="space-y-3 text-sm text-label p-4 theme-input border rounded-xl">
-                            <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-400" id="settingsUsername">---</b></p>
-                            <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-400">Firebase Firestore (Hoạt động tốt)</b></p>
-                            <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-400">10 Điểm (Tự động chia đều)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-400">Glassmorphism & Gemini Background</b></p>
+                            <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
+                            <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
+                            <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tự động chia đều)</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Glassmorphism & Radial Background</b></p>
                         </div>
                     </div>
                 </div>
 
                 <!-- KHUNG TẠO BÀI MỚI (TRẮC NGHIỆM) -->
                 <div id="setupSection" class="hidden theme-card border rounded-2xl p-6 shadow-xl animate-slide-up transition-colors duration-500">
-                    <h1 class="text-xl font-bold text-cyan-400 mb-2">Tạo Bộ Trắc Nghiệm Mới</h1>
+                    <h1 class="text-xl font-bold text-cyan-500 mb-2">Tạo Bộ Trắc Nghiệm Mới</h1>
                     <p class="text-xs mb-6 text-label">Quét tài liệu PDF hoặc TXT để tạo bộ đề tự động bằng AI, lưu an toàn vào tài khoản của bạn.</p>
                     
                     <div class="space-y-4">
@@ -375,10 +405,10 @@
                         <div class="border-2 border-dashed rounded-xl p-8 text-center theme-input hover:border-cyan-500/50 transition-colors duration-300 cursor-pointer group">
                             <input type="file" id="fileInput" accept=".txt,.pdf" class="hidden">
                             <label for="fileInput" class="cursor-pointer flex flex-col items-center justify-center">
-                                <div class="w-12 h-12 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <div class="w-12 h-12 bg-cyan-500/20 text-cyan-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                                     📄
                                 </div>
-                                <span class="font-medium text-sm group-hover:text-cyan-400 transition-colors">Nhấn để chọn file PDF hoặc TXT tài liệu</span>
+                                <span class="font-medium text-sm group-hover:text-cyan-500 transition-colors">Nhấn để chọn file PDF hoặc TXT tài liệu</span>
                                 <span class="text-xs mt-1 text-label" id="fileName">Chưa chọn file nào</span>
                             </label>
                         </div>
@@ -387,7 +417,7 @@
                             <button id="generateBtn" class="flex-1 btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/40 text-sm">
                                 Quét & Lưu Lên Đám Mây
                             </button>
-                            <button onclick="hideUploadSection()" class="btn-interactive theme-btn font-bold px-6 py-3.5 rounded-xl text-sm border transition-colors hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30">
+                            <button onclick="hideUploadSection()" class="btn-interactive theme-btn font-bold px-6 py-3.5 rounded-xl text-sm border transition-colors hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30">
                                 Hủy
                             </button>
                         </div>
@@ -396,20 +426,20 @@
 
                 <!-- Màn hình Loading -->
                 <div id="loadingIndicator" class="hidden flex-col items-center justify-center py-12 theme-card border rounded-2xl shadow-xl p-6 animate-pop-in transition-colors duration-500">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-cyan-400 mb-4"></div>
-                    <p id="loadingText" class="text-cyan-400 font-medium text-sm animate-pulse text-center">AI Đang xử lý tài liệu, vui lòng chờ...</p>
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-cyan-500 mb-4"></div>
+                    <p id="loadingText" class="text-cyan-500 font-medium text-sm animate-pulse text-center">AI Đang xử lý tài liệu, vui lòng chờ...</p>
                 </div>
 
                 <!-- GIAO DIỆN LÀM BÀI (QUIZ) -->
                 <div id="quizArea" class="hidden space-y-6 animate-fade-in">
                     <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex justify-between items-center shadow-xl transition-colors duration-500">
                         <div>
-                            <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-400">Tên Bài Học</h2>
+                            <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-500">Tên Bài Học</h2>
                             <p class="text-xs text-label mt-1">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span></p>
                         </div>
                         <div class="flex items-center gap-5">
-                            <div class="text-2xl font-black text-teal-400"><span id="scoreCount">0.0</span> / 10</div>
-                            <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2.5 rounded-xl font-bold border transition-colors hover:bg-slate-500/20">Thoát Bài</button>
+                            <div class="text-2xl font-black text-teal-500"><span id="scoreCount">0.0</span> / 10</div>
+                            <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2.5 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
                         </div>
                     </div>
                     <div id="quizContainer" class="space-y-5 mb-20"></div>
@@ -423,8 +453,8 @@
     <div id="adminUserDetailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar animate-pop-in transition-colors duration-500">
             <div class="flex justify-between items-center border-b border-slate-500/20 pb-3">
-                <h3 class="text-base font-bold text-cyan-400">Chi Tiết Tài Khoản: <span id="detailUsername" class="text-teal-400">---</span></h3>
-                <button onclick="closeAdminDetailModal()" class="text-2xl font-bold text-slate-400 hover:text-red-400 transition-colors">&times;</button>
+                <h3 class="text-base font-bold text-cyan-500">Chi Tiết Tài Khoản: <span id="detailUsername" class="text-teal-500">---</span></h3>
+                <button onclick="closeAdminDetailModal()" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
             </div>
             <div class="space-y-4 text-xs">
                 <div>
@@ -435,11 +465,11 @@
                     </div>
                 </div>
                 <div>
-                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-2">📂 Bài Đã Đăng / Tạo:</h4>
+                    <h4 class="font-bold text-slate-500 uppercase tracking-wider mb-2">📂 Bài Đã Đăng / Tạo:</h4>
                     <div id="detailUserQuizzes" class="p-3 theme-input border rounded-xl space-y-2 max-h-40 overflow-y-auto custom-scrollbar transition-colors">Đang tải...</div>
                 </div>
                 <div>
-                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-2">📊 Kết Quả Bài Thi Đã Làm:</h4>
+                    <h4 class="font-bold text-slate-500 uppercase tracking-wider mb-2">📊 Kết Quả Bài Thi Đã Làm:</h4>
                     <div id="detailUserResults" class="p-3 theme-input border rounded-xl space-y-2 max-h-40 overflow-y-auto custom-scrollbar transition-colors">Đang tải...</div>
                 </div>
             </div>
@@ -450,8 +480,8 @@
     <div id="shareDocModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4 animate-pop-in transition-colors duration-500">
             <div class="flex justify-between items-center border-b border-slate-500/20 pb-3">
-                <h3 class="text-base font-bold text-cyan-400">Chia Sẻ Tài Liệu Học Tập</h3>
-                <button onclick="closeShareDocModal()" class="text-2xl font-bold text-slate-400 hover:text-red-400 transition-colors">&times;</button>
+                <h3 class="text-base font-bold text-cyan-500">Chia Sẻ Tài Liệu Học Tập</h3>
+                <button onclick="closeShareDocModal()" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
             </div>
             
             <div class="space-y-4">
@@ -465,11 +495,11 @@
                     <div class="flex gap-4 mb-2">
                         <label class="flex items-center gap-2 text-xs cursor-pointer text-label group">
                             <input type="radio" name="docType" value="file" checked onclick="toggleDocInputMode('file')" class="text-cyan-500 focus:ring-cyan-400"> 
-                            <span class="group-hover:text-cyan-400 transition-colors">Tải file (PDF, Word, PPT)</span>
+                            <span class="group-hover:text-cyan-500 transition-colors">Tải file (PDF, Word, PPT)</span>
                         </label>
                         <label class="flex items-center gap-2 text-xs cursor-pointer text-label group">
                             <input type="radio" name="docType" value="link" onclick="toggleDocInputMode('link')" class="text-cyan-500 focus:ring-cyan-400"> 
-                            <span class="group-hover:text-cyan-400 transition-colors">Đường dẫn (Link)</span>
+                            <span class="group-hover:text-cyan-500 transition-colors">Đường dẫn (Link)</span>
                         </label>
                     </div>
                 </div>
@@ -478,8 +508,8 @@
                     <div class="border-2 border-dashed rounded-xl p-6 text-center theme-input hover:border-cyan-500/50 transition-colors duration-300 cursor-pointer group">
                         <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden">
                         <label for="docFileInput" class="cursor-pointer flex flex-col items-center justify-center">
-                            <span class="font-medium text-xs group-hover:text-cyan-400 transition-colors">Chọn file PDF, Word (.doc/.docx) hoặc PPT (.ppt/.pptx)</span>
-                            <span class="text-[11px] text-teal-400 mt-2 font-bold bg-teal-500/10 px-2 py-1 rounded" id="docFileName">Chưa chọn file nào</span>
+                            <span class="font-medium text-xs group-hover:text-cyan-500 transition-colors">Chọn file PDF, Word (.doc/.docx) hoặc PPT (.ppt/.pptx)</span>
+                            <span class="text-[11px] text-teal-500 mt-2 font-bold bg-teal-500/10 px-2 py-1 rounded" id="docFileName">Chưa chọn file nào</span>
                         </label>
                     </div>
                 </div>
@@ -489,7 +519,7 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button onclick="closeShareDocModal()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border transition-colors hover:bg-red-500/10 hover:text-red-400">Hủy</button>
+                    <button onclick="closeShareDocModal()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border transition-colors hover:bg-red-500/10 hover:text-red-500">Hủy</button>
                     <button onclick="uploadAndShareDocument()" id="uploadDocBtn" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold shadow transition-all duration-300 hover:shadow-cyan-500/40">Chia Sẻ Ngay</button>
                 </div>
             </div>
@@ -499,7 +529,7 @@
     <!-- CUSTOM ALERT MODAL -->
     <div id="customAlertModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4 text-center animate-pop-in transition-colors duration-500">
-            <h3 id="alertTitle" class="text-lg font-bold text-cyan-400">Thông Báo</h3>
+            <h3 id="alertTitle" class="text-lg font-bold text-cyan-500">Thông Báo</h3>
             <p id="alertMessage" class="text-sm leading-relaxed text-label"></p>
             <button onclick="closeAlertModal()" class="w-full btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-2.5 rounded-xl text-xs font-bold shadow transition-all duration-300 hover:shadow-cyan-500/40 mt-2">OK</button>
         </div>
@@ -509,12 +539,12 @@
     <div id="customModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4 animate-pop-in transition-colors duration-500">
             <div class="flex justify-between items-center border-b border-slate-500/20 pb-3">
-                <h3 id="modalTitle" class="text-lg font-bold text-cyan-400">Xác nhận thao tác</h3>
-                <button onclick="closeModal(false)" class="text-2xl font-bold text-slate-400 hover:text-red-400 transition-colors">&times;</button>
+                <h3 id="modalTitle" class="text-lg font-bold text-cyan-500">Xác nhận thao tác</h3>
+                <button onclick="closeModal(false)" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
             </div>
             <p id="modalMessage" class="text-sm leading-relaxed text-label">Bạn có chắc chắn muốn thực hiện hành động này?</p>
             <div class="flex justify-end gap-3 pt-2">
-                <button id="modalCancelBtn" onclick="closeModal(false)" class="btn-interactive theme-btn px-5 py-2 rounded-xl text-xs font-bold transition-colors border hover:bg-slate-500/20">Hủy</button>
+                <button id="modalCancelBtn" onclick="closeModal(false)" class="btn-interactive theme-btn px-5 py-2 rounded-xl text-xs font-bold transition-colors border hover:bg-slate-500/10">Hủy</button>
                 <button id="modalConfirmBtn" onclick="closeModal(true)" class="btn-interactive bg-red-500 hover:bg-red-400 text-slate-950 px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/40">Xác Nhận</button>
             </div>
         </div>
@@ -732,7 +762,7 @@
                     el.classList.remove('animate-fade-in');
                 }
                 if(nav) {
-                    nav.classList.remove('bg-cyan-500/20', 'text-cyan-400', 'border-l-4', 'border-cyan-500');
+                    nav.classList.remove('bg-cyan-500/20', 'text-cyan-500', 'border-l-4', 'border-cyan-500');
                     nav.classList.add('text-slate-400');
                 }
             });
@@ -746,7 +776,7 @@
             }
             if(activeNav) {
                 activeNav.classList.remove('text-slate-400');
-                activeNav.classList.add('bg-cyan-500/20', 'text-cyan-400', 'border-l-4', 'border-cyan-500', 'pl-2');
+                activeNav.classList.add('bg-cyan-500/20', 'text-cyan-500', 'border-l-4', 'border-cyan-500', 'pl-2');
             }
 
             hideUploadSection();
@@ -890,18 +920,18 @@
                         let replyHtml = '';
                         if (msg.replyTo) {
                             replyHtml = `
-                                <div class="mb-1.5 p-2 rounded-lg bg-black/10 dark:bg-black/20 text-[11px] border-l-2 border-cyan-400">
-                                    <b class="text-cyan-600 dark:text-cyan-300">@${msg.replyTo.username}</b>
+                                <div class="mb-1.5 p-2 rounded-lg bg-black/10 dark:bg-black/20 text-[11px] border-l-2 border-cyan-500">
+                                    <b class="text-cyan-600 dark:text-cyan-400">@${msg.replyTo.username}</b>
                                     <p class="truncate opacity-80">${escapeHtml(msg.replyTo.message)}</p>
                                 </div>
                             `;
                         }
 
                         let formattedMsg = escapeHtml(msg.message);
-                        formattedMsg = formattedMsg.replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-cyan-600 dark:text-cyan-300 font-bold bg-cyan-500/10 px-1 py-0.5 rounded">@$1</span>');
+                        formattedMsg = formattedMsg.replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-cyan-600 dark:text-cyan-400 font-bold bg-cyan-500/10 px-1 py-0.5 rounded">@$1</span>');
 
                         let actionButtonsHtml = `
-                            <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute ${isMe ? '-left-14' : '-right-14'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100 bg-slate-700 text-slate-200 text-[10px] px-2.5 py-1 rounded-lg shadow-md hover:bg-cyan-600">Trả lời</button>
+                            <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute ${isMe ? '-left-14' : '-right-14'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100 bg-slate-700 text-slate-200 text-[10px] px-2.5 py-1 rounded-lg shadow-md hover:bg-cyan-500">Trả lời</button>
                         `;
 
                         msgDiv.innerHTML = `
@@ -910,7 +940,7 @@
                                 <div class="flex items-center gap-2 mb-1 px-1">
                                     <span class="text-[10px] font-bold text-label">@${msg.username}</span>
                                     <span class="text-[10px] text-label/60">${timeStr}</span>
-                                    ${isMe ? `<button onclick="recallMessage('${msgId}')" class="text-[10px] text-red-400 hover:text-red-500 transition-colors ml-1 opacity-0 group-hover:opacity-100">Thu hồi</button>` : ''}
+                                    ${isMe ? `<button onclick="recallMessage('${msgId}')" class="text-[10px] text-red-500 hover:text-red-600 transition-colors ml-1 opacity-0 group-hover:opacity-100">Thu hồi</button>` : ''}
                                     <span id="adminDeleteBtn_${msgId}" class="opacity-0 group-hover:opacity-100 transition-opacity"></span>
                                 </div>
                                 <div class="relative p-3.5 rounded-2xl text-[13px] leading-relaxed ${bubbleStyle} shadow-sm transition-transform duration-300 hover:shadow-md">
@@ -926,7 +956,7 @@
                             if (userDoc.exists && userDoc.data().isAdmin) {
                                 const delSpan = document.getElementById(`adminDeleteBtn_${msgId}`);
                                 if (delSpan) {
-                                    delSpan.innerHTML = `<button onclick="adminDeleteMessage('${msgId}')" class="text-[10px] text-red-500 hover:text-red-400 font-bold ml-2 bg-red-500/10 px-1.5 rounded">Xóa (Admin)</button>`;
+                                    delSpan.innerHTML = `<button onclick="adminDeleteMessage('${msgId}')" class="text-[10px] text-red-600 hover:text-red-500 font-bold ml-2 bg-red-500/10 px-1.5 rounded">Xóa (Admin)</button>`;
                                 }
                             }
                         });
@@ -1009,9 +1039,9 @@
             const items = document.querySelectorAll('.mention-item');
             items.forEach((item, idx) => {
                 if (idx === selectedMentionIndex) {
-                    item.classList.add('bg-cyan-500/20', 'text-cyan-400', 'pl-3');
+                    item.classList.add('bg-cyan-500/20', 'text-cyan-500', 'pl-3');
                 } else {
-                    item.classList.remove('bg-cyan-500/20', 'text-cyan-400', 'pl-3');
+                    item.classList.remove('bg-cyan-500/20', 'text-cyan-500', 'pl-3');
                     item.classList.add('hover:bg-slate-500/10');
                 }
             });
@@ -1136,12 +1166,12 @@
                 div.style.animationDelay = `${index * 0.05}s`;
                 
                 let deleteBtnHtml = userId !== 'admin' ? 
-                    `<button onclick="event.stopPropagation(); confirmDeleteUser('${userId}')" class="btn-interactive bg-red-500/20 hover:bg-red-500/30 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>` : 
-                    `<span class="text-red-400 font-bold bg-red-500/10 px-2 py-1 rounded">Bảo vệ</span>`;
+                    `<button onclick="event.stopPropagation(); confirmDeleteUser('${userId}')" class="btn-interactive bg-red-500/20 hover:bg-red-500/30 text-red-500 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>` : 
+                    `<span class="text-red-500 font-bold bg-red-500/10 px-2 py-1 rounded">Bảo vệ</span>`;
 
                 div.innerHTML = `
                     <div class="flex items-center gap-2 cursor-pointer flex-1 group" onclick="openAdminUserDetail('${userId}')">
-                        <span>👤 <b class="group-hover:text-cyan-400 transition-colors">${userId}</b></span>
+                        <span>👤 <b class="group-hover:text-cyan-500 transition-colors">${userId}</b></span>
                         <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'})</span>
                     </div>
                     <div>${deleteBtnHtml}</div>
@@ -1165,10 +1195,10 @@
                 div.style.animationDelay = `${index * 0.05}s`;
                 div.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
-                        <b class="text-cyan-400 flex-1 leading-tight">@${f.username}: ${f.title}</b>
-                        <button onclick="deleteFeedback('${fId}')" class="text-red-400 hover:text-red-500 transition-colors shrink-0">Xóa</button>
+                        <b class="text-cyan-500 flex-1 leading-tight">@${f.username}: ${f.title}</b>
+                        <button onclick="deleteFeedback('${fId}')" class="text-red-500 hover:text-red-600 transition-colors shrink-0">Xóa</button>
                     </div>
-                    <p class="text-label leading-relaxed bg-black/10 dark:bg-black/20 p-2 rounded-lg">${f.content}</p>
+                    <p class="text-label leading-relaxed bg-slate-500/10 p-2 rounded-lg">${f.content}</p>
                 `;
                 box.appendChild(div);
             });
@@ -1188,7 +1218,7 @@
             quizDiv.innerHTML = quizzesSnap.empty ? '<p class="text-label italic">Chưa tạo bộ đề nào.</p>' : '';
             quizzesSnap.forEach(doc => {
                 let q = doc.data();
-                quizDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-cyan-500/50 transition-colors"><span class="truncate pr-2">${q.title}</span><span class="text-[10px] text-cyan-400 font-bold shrink-0">${q.questions.length} câu</span></div>`;
+                quizDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-cyan-500/50 transition-colors"><span class="truncate pr-2">${q.title}</span><span class="text-[10px] text-cyan-500 font-bold shrink-0">${q.questions.length} câu</span></div>`;
             });
 
             const resultsSnap = await db.collection('quiz_results').where('username', '==', userId).get();
@@ -1196,7 +1226,7 @@
             resultDiv.innerHTML = resultsSnap.empty ? '<p class="text-label italic">Chưa có lịch sử làm bài thi nào.</p>' : '';
             resultsSnap.forEach(doc => {
                 let r = doc.data();
-                resultDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-teal-500/50 transition-colors"><span class="truncate pr-2">${r.quizTitle}</span><b class="text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded shrink-0">${r.score} Điểm</b></div>`;
+                resultDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-teal-500/50 transition-colors"><span class="truncate pr-2">${r.quizTitle}</span><b class="text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded shrink-0">${r.score} Điểm</b></div>`;
             });
 
             const modal = document.getElementById('adminUserDetailModal');
@@ -1316,15 +1346,15 @@
                     actionBtn = `<a href="${data.fileLink}" target="_blank" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3.5 py-2 rounded-lg text-xs font-bold shadow-md transition-colors flex items-center gap-1.5"><span class="text-sm">🔗</span> Mở Link</a>`;
                 }
 
-                let deleteBtn = (currentUser === 'admin' || currentUser === data.author) ? `<button onclick="confirmDeleteDoc('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm">Xóa</button>` : '';
+                let deleteBtn = (currentUser === 'admin' || currentUser === data.author) ? `<button onclick="confirmDeleteDoc('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm">Xóa</button>` : '';
 
                 item.innerHTML = `
                     <div class="pr-4">
-                        <h4 class="font-bold text-sm text-cyan-50 hover:text-cyan-400 transition-colors cursor-default">${data.title}</h4>
+                        <h4 class="font-bold text-sm text-cyan-950 dark:text-cyan-50 hover:text-cyan-500 transition-colors cursor-default">${data.title}</h4>
                         <p class="text-[11px] mt-1.5 text-label flex items-center gap-2">
-                            <span>Bởi: <span class="text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">@${data.author}</span></span> 
-                            <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                            <span class="text-teal-400 uppercase font-bold text-[10px] bg-teal-500/10 px-1.5 py-0.5 rounded">${data.type}</span>
+                            <span>Bởi: <span class="text-cyan-500 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">@${data.author}</span></span> 
+                            <span class="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                            <span class="text-teal-500 uppercase font-bold text-[10px] bg-teal-500/10 px-1.5 py-0.5 rounded">${data.type}</span>
                         </p>
                     </div>
                     <div class="flex gap-2 items-center shrink-0">${actionBtn}${deleteBtn}</div>
@@ -1356,15 +1386,15 @@
                     <div class="pr-4">
                         <h4 class="font-bold text-sm cursor-default">${quiz.title}</h4>
                         <p class="text-[11px] mt-1.5 text-label flex items-center gap-2">
-                            <span class="bg-slate-500/20 px-2 py-0.5 rounded font-bold text-slate-300">${quiz.questions.length} câu</span>
-                            <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                            ${quiz.shared ? '<span class="text-teal-400 font-bold bg-teal-500/10 px-2 py-0.5 rounded">Đã công khai</span>' : '<span class="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">Riêng tư</span>'}
+                            <span class="bg-slate-500/10 dark:bg-slate-500/20 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">${quiz.questions.length} câu</span>
+                            <span class="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                            ${quiz.shared ? '<span class="text-teal-500 font-bold bg-teal-500/10 px-2 py-0.5 rounded">Đã công khai</span>' : '<span class="text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">Riêng tư</span>'}
                         </p>
                     </div>
                     <div class="flex gap-2 shrink-0">
                         <button onclick="startMyQuiz('${id}')" class="btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-teal-500/40">Làm Bài</button>
                         ${!quiz.shared ? `<button onclick="shareQuiz('${id}')" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3.5 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-cyan-500/40">Chia Sẻ</button>` : ''}
-                        <button onclick="confirmDeleteMyQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>
+                        <button onclick="confirmDeleteMyQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>
                     </div>
                 `;
                 listDiv.appendChild(item);
@@ -1406,14 +1436,14 @@
                     <div class="pr-4">
                         <h4 class="font-bold text-sm cursor-default">${quiz.title}</h4>
                         <p class="text-[11px] mt-1.5 text-label flex items-center gap-2">
-                            <span>Bởi: <span class="text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">@${quiz.author}</span></span>
-                            <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                            <span class="bg-slate-500/20 px-2 py-0.5 rounded font-bold text-slate-300">${quiz.questions.length} câu</span>
+                            <span>Bởi: <span class="text-cyan-500 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded">@${quiz.author}</span></span>
+                            <span class="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                            <span class="bg-slate-500/10 dark:bg-slate-500/20 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">${quiz.questions.length} câu</span>
                         </p>
                     </div>
                     <div class="flex gap-2 shrink-0">
                         <button onclick="startPublicQuiz('${id}')" class="btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-teal-500/40">Làm Bài</button>
-                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="confirmDeletePublicQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>` : ''}
+                        ${(currentUser === 'admin' || currentUser === quiz.author) ? `<button onclick="confirmDeletePublicQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>` : ''}
                     </div>
                 `;
                 listDiv.appendChild(item);
@@ -1569,7 +1599,7 @@
                     
                     const radio = document.createElement('input');
                     radio.type = 'radio'; radio.name = `question_${qIndex}`; radio.value = opt;
-                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-400 mr-3 transition-colors';
+                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-500 mr-3 transition-colors';
 
                     const textSpan = document.createElement('span');
                     textSpan.className = 'font-medium text-sm leading-relaxed'; textSpan.innerText = opt;
@@ -1596,12 +1626,12 @@
                         allLabels.forEach(l => {
                             const radioValue = l.querySelector('input').value;
                             if (radioValue === q.correctAnswer) {
-                                l.classList.remove('opacity-70'); l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-200');
-                                const checkIcon = document.createElement('span'); checkIcon.innerHTML = '✔'; checkIcon.className = 'ml-auto font-bold text-teal-400 text-lg animate-pop-in'; l.appendChild(checkIcon);
+                                l.classList.remove('opacity-70'); l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
+                                const checkIcon = document.createElement('span'); checkIcon.innerHTML = '✔'; checkIcon.className = 'ml-auto font-bold text-teal-500 text-lg animate-pop-in'; l.appendChild(checkIcon);
                             } 
                             else if (radioValue === opt && !isCorrect) {
-                                l.classList.remove('opacity-70'); l.classList.add('bg-red-500/20', 'border-red-500', 'text-red-200');
-                                const crossIcon = document.createElement('span'); crossIcon.innerHTML = '❌'; crossIcon.className = 'ml-auto font-bold text-red-400 text-lg animate-pop-in'; l.appendChild(crossIcon);
+                                l.classList.remove('opacity-70'); l.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-200');
+                                const crossIcon = document.createElement('span'); crossIcon.innerHTML = '❌'; crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in'; l.appendChild(crossIcon);
                             }
                         });
 
