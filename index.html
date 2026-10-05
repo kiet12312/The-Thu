@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Refined Audio Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Single-Question Mode, Hotkeys & Auto Delay Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -445,16 +445,30 @@
 
                 <!-- GIAO DIỆN LÀM BÀI (QUIZ) -->
                 <div id="quizArea" class="hidden space-y-6 animate-fade-in">
-                    <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex justify-between items-center shadow-xl transition-colors duration-500">
+                    <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex flex-wrap justify-between items-center shadow-xl gap-4 transition-colors duration-500">
                         <div>
                             <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-500">Tên Bài Học</h2>
                             <p class="text-xs text-label mt-1">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span> câu</p>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="clearQuizProgress()" class="text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-3.5 py-2 rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 Làm Lại</button>
-                            <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2.5 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
+
+                        <!-- CÔNG TẮC & ĐIỀU KHIỂN CHẾ ĐỘ TỪNG CÂU -->
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <div class="flex items-center gap-2 theme-input px-3 py-1.5 rounded-xl border">
+                                <span class="text-xs font-semibold text-label">Chế độ từng câu:</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="singleQuestionModeToggle" class="sr-only peer" onchange="toggleSingleQuestionMode()">
+                                    <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="clearQuizProgress()" class="text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-3 py-2 rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 Làm Lại</button>
+                                <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- CONTAINER CHỨA NỘI DUNG BÀI LÀM (DANH SÁCH HOẶC TỪNG CÂU) -->
                     <div id="quizContainer" class="space-y-5"></div>
                     
                     <!-- Nút Nộp Bài -->
@@ -628,7 +642,6 @@
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
                 
-                // Âm thanh "Ting-ting" đúng (3 nốt nhạc vui tươi)
                 [523.25, 659.25, 783.99].forEach((freq, i) => {
                     let osc = ctx.createOscillator();
                     let gain = ctx.createGain();
@@ -649,7 +662,6 @@
                 const ctx = getAudioContext();
                 const now = ctx.currentTime;
                 
-                // Âm thanh sai tinh tế, mượt mà hơn (dạng chuông trầm lùi nhẹ nhàng)
                 [320, 240].forEach((freq, i) => {
                     let osc = ctx.createOscillator();
                     let gain = ctx.createGain();
@@ -684,6 +696,13 @@
         let activeQuizId = null;
         let activeQuizTitleText = "";
 
+        // Biến trạng thái chế độ từng câu & auto
+        let isSingleQuestionMode = false;
+        let currentSingleIndex = 0;
+        let isAutoNextEnabled = false;
+        let autoNextDelaySeconds = 1;
+        let autoNextTimer = null;
+
         function toggleTheme() {
             const htmlEl = document.documentElement;
             const bodyEl = document.body;
@@ -696,7 +715,7 @@
                 bodyEl.classList.remove('dark');
                 localStorage.setItem('quiz_theme', 'light');
                 themeSwitch.className = "theme-switch light-switch";
-                switchIcon.innerText = "☀️";
+                switchIcon.innerText = "☀️️";
                 themeLabel.innerText = "Light Mode";
             } else {
                 htmlEl.classList.add('dark');
@@ -771,7 +790,63 @@
             }
 
             setupDragAndDrop();
+            setupKeyboardHotkeys();
         });
+
+        // --- XỬ LÝ PHÍM TẮT BÀN PHÍM ---
+        function setupKeyboardHotkeys() {
+            window.addEventListener('keydown', (e) => {
+                const quizArea = document.getElementById('quizArea');
+                if (!quizArea || quizArea.classList.contains('hidden')) return;
+
+                // Nếu đang gõ ở ô input hoặc textarea thì không bắt phím tắt
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+                const key = e.key.toLowerCase();
+
+                // Phím 1, 2, 3, 4, 5 tương ứng chọn đáp án A, B, C, D, E
+                if (['1', '2', '3', '4', '5'].includes(key)) {
+                    e.preventDefault();
+                    let optIndex = parseInt(key) - 1;
+                    
+                    if (isSingleQuestionMode) {
+                        let currentLabels = document.querySelectorAll('#singleQuestionBox .option-label');
+                        if (currentLabels[optIndex]) {
+                            let radio = currentLabels[optIndex].querySelector('input[type="radio"]');
+                            if (radio && !currentLabels[optIndex].classList.contains('disabled')) {
+                                radio.click();
+                            }
+                        }
+                    } else {
+                        // Ở chế độ danh sách, chọn theo câu hỏi đang nhìn thấy hoặc câu hiện tại
+                        let currentQDivs = document.querySelectorAll('#quizContainer > div');
+                        // Chọn câu hỏi đầu tiên chưa làm hoặc đang cuộn tới
+                        for (let qi = 0; qi < currentQDivs.length; qi++) {
+                            let labels = currentQDivs[qi].querySelectorAll('.option-label');
+                            if (labels.length > optIndex && !labels[0].classList.contains('disabled')) {
+                                let radio = labels[optIndex].querySelector('input[type="radio"]');
+                                if (radio) {
+                                    radio.click();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Phím D hoặc Mũi tên phải -> Sang câu tiếp theo (trong chế độ từng câu)
+                if (isSingleQuestionMode && (key === 'd' || e.key === 'ArrowRight')) {
+                    e.preventDefault();
+                    nextSingleQuestion();
+                }
+
+                // Phím A hoặc Mũi tên trái -> Lùi về câu trước (trong chế độ từng câu)
+                if (isSingleQuestionMode && (key === 'a' || e.key === 'ArrowLeft')) {
+                    e.preventDefault();
+                    prevSingleQuestion();
+                }
+            });
+        }
 
         function setupDragAndDrop() {
             const dropZone = document.getElementById('dropZone');
@@ -1821,6 +1896,7 @@
         function hideUploadSection() { document.getElementById('setupSection').classList.add('hidden'); }
         
         function backToDashboard() { 
+            if (autoNextTimer) clearTimeout(autoNextTimer);
             document.getElementById('quizArea').classList.add('hidden'); 
             loadMyQuizzes(); 
             loadPublicQuizzes(); 
@@ -1927,12 +2003,33 @@
             const quizArea = document.getElementById('quizArea');
             document.getElementById('activeQuizTitle').innerText = quiz.title;
             
+            isSingleQuestionMode = document.getElementById('singleQuestionModeToggle').checked;
+            currentSingleIndex = 0;
+
             quizArea.classList.remove('hidden'); quizArea.classList.remove('animate-fade-in'); void quizArea.offsetWidth; quizArea.classList.add('animate-fade-in');
-            renderQuiz(quiz.questions); 
+            
+            if (isSingleQuestionMode) {
+                renderSingleQuestion();
+            } else {
+                renderQuizList(quiz.questions);
+            }
+
             document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function renderQuiz(questions) {
+        function toggleSingleQuestionMode() {
+            isSingleQuestionMode = document.getElementById('singleQuestionModeToggle').checked;
+            if (autoNextTimer) clearTimeout(autoNextTimer);
+            if (isSingleQuestionMode) {
+                currentSingleIndex = 0;
+                renderSingleQuestion();
+            } else {
+                renderQuizList(currentActiveQuestions);
+            }
+        }
+
+        // --- RENDER CHẾ ĐỘ DANH SÁCH ---
+        function renderQuizList(questions) {
             const quizContainer = document.getElementById('quizContainer');
             quizContainer.innerHTML = '';
             
@@ -2022,7 +2119,6 @@
                             playCorrectSound();
                         }
 
-                        // Auto-save tiến trình ngay lập tức
                         let currentProg = {};
                         try {
                             let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
@@ -2031,7 +2127,6 @@
                         currentProg[qIndex] = opt;
                         localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
 
-                        // Cập nhật số câu đã trả lời
                         let count = 0;
                         for (let i = 0; i < questions.length; i++) {
                             if (document.querySelector(`input[name="question_${i}"]:checked`)) count++;
@@ -2044,49 +2139,246 @@
                 qDiv.appendChild(optionsDiv); quizContainer.appendChild(qDiv);
             });
             document.getElementById('answeredCount').innerText = answeredCount;
+            document.getElementById('submitQuizBox').classList.remove('hidden');
+        }
+
+        // --- RENDER CHẾ ĐỘ TỪNG CÂU (SINGLE QUESTION MODE) ---
+        function renderSingleQuestion() {
+            if (autoNextTimer) clearTimeout(autoNextTimer);
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = '';
+            
+            const questions = currentActiveQuestions;
+            document.getElementById('totalCount').innerText = questions.length;
+
+            let savedProgress = {};
+            try {
+                let localData = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                if (localData) savedProgress = JSON.parse(localData);
+            } catch(e) {}
+
+            let answeredCount = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (savedProgress[i]) answeredCount++;
+            }
+            document.getElementById('answeredCount').innerText = answeredCount;
+
+            if (currentSingleIndex < 0) currentSingleIndex = 0;
+            if (currentSingleIndex >= questions.length) currentSingleIndex = questions.length - 1;
+
+            const q = questions[currentSingleIndex];
+            const qDiv = document.createElement('div');
+            qDiv.id = 'singleQuestionBox';
+            qDiv.className = 'theme-card border p-8 rounded-3xl shadow-2xl animate-fade-in space-y-6 max-w-3xl mx-auto';
+
+            // Thanh tiến trình nhỏ trên cùng
+            let progressHeader = document.createElement('div');
+            progressHeader.className = 'flex justify-between items-center text-xs font-bold text-cyan-500 uppercase tracking-wider border-b border-slate-500/20 pb-3';
+            progressHeader.innerHTML = `<span>Câu hỏi ${currentSingleIndex + 1} / ${questions.length}</span><span>Phím tắt: 1-5 chọn đáp án | A/Trái & D/Phải điều hướng</span>`;
+            qDiv.appendChild(progressHeader);
+
+            // Nội dung câu hỏi to rõ
+            const questionTitle = document.createElement('h3');
+            questionTitle.className = 'text-lg md:text-xl font-bold leading-relaxed';
+            questionTitle.innerText = q.question;
+            qDiv.appendChild(questionTitle);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'space-y-3.5';
+
+            let userSelectedOpt = savedProgress[currentSingleIndex] || null;
+
+            q.options.forEach((opt, optIdx) => {
+                const label = document.createElement('label');
+                label.className = 'option-label flex items-center justify-between p-4.5 border rounded-2xl cursor-pointer theme-input hover:shadow-lg text-base';
+                
+                const leftSide = document.createElement('div');
+                leftSide.className = 'flex items-center gap-3.5 flex-1 pr-3';
+
+                const radio = document.createElement('input');
+                radio.type = 'radio'; radio.name = `single_question_${currentSingleIndex}`; radio.value = opt;
+                radio.className = 'w-5 h-5 text-cyan-500 focus:ring-cyan-500 flex-shrink-0';
+
+                const keyBadge = document.createElement('span');
+                keyBadge.className = 'text-xs font-bold bg-cyan-500/20 text-cyan-500 px-2 py-0.5 rounded';
+                keyBadge.innerText = `${optIdx + 1}`;
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'font-medium text-sm md:text-base leading-relaxed'; textSpan.innerText = opt;
+
+                leftSide.appendChild(keyBadge);
+                leftSide.appendChild(radio);
+                leftSide.appendChild(textSpan);
+                label.appendChild(leftSide);
+
+                const badgeSide = document.createElement('div');
+                badgeSide.className = 'flex-shrink-0 flex items-center';
+                label.appendChild(badgeSide);
+
+                if (userSelectedOpt) {
+                    label.classList.add('disabled');
+                    if (opt.trim() === q.correctAnswer.trim()) {
+                        label.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                        badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
+                    }
+                    if (opt === userSelectedOpt) {
+                        radio.checked = true;
+                        if (userSelectedOpt.trim() !== q.correctAnswer.trim()) {
+                            label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                            badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                        }
+                    }
+                }
+
+                radio.addEventListener('change', () => {
+                    if (label.classList.contains('disabled')) return;
+                    
+                    const allLabels = optionsDiv.querySelectorAll('label');
+                    allLabels.forEach(l => {
+                        l.classList.add('disabled');
+                        let val = l.querySelector('input').value;
+                        let bSide = l.querySelector('div:last-child');
+                        if (val.trim() === q.correctAnswer.trim()) {
+                            l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                            bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
+                        }
+                    });
+
+                    if (opt.trim() !== q.correctAnswer.trim()) {
+                        label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                        badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                        playWrongSound();
+                    } else {
+                        playCorrectSound();
+                    }
+
+                    let currentProg = {};
+                    try {
+                        let old = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                        if (old) currentProg = JSON.parse(old);
+                    } catch(e) {}
+                    currentProg[currentSingleIndex] = opt;
+                    localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(currentProg));
+
+                    let count = 0;
+                    for (let i = 0; i < questions.length; i++) {
+                        if (currentProg[i]) count++;
+                    }
+                    document.getElementById('answeredCount').innerText = count;
+
+                    // Xử lý Auto chuyển câu nếu được bật
+                    if (isAutoNextEnabled && currentSingleIndex < questions.length - 1) {
+                        let delaySec = parseFloat(document.getElementById('autoDelayInput').value) || 1;
+                        autoNextTimer = setTimeout(() => {
+                            if (isSingleQuestionMode) {
+                                currentSingleIndex++;
+                                renderSingleQuestion();
+                            }
+                        }, delaySec * 1000);
+                    }
+                });
+
+                optionsDiv.appendChild(label);
+            });
+            qDiv.appendChild(optionsDiv);
+
+            // Bảng điều khiển phía dưới: Nút Lùi, Auto checkbox + Delay, Nút Tiếp theo
+            const navFooter = document.createElement('div');
+            navFooter.className = 'flex justify-between items-center pt-4 border-t border-slate-500/20 flex-wrap gap-4';
+
+            let prevBtn = document.createElement('button');
+            prevBtn.className = `btn-interactive theme-btn px-5 py-2.5 rounded-xl font-bold text-xs border ${currentSingleIndex === 0 ? 'opacity-40 pointer-events-none' : ''}`;
+            prevBtn.innerHTML = `⬅️ Câu Trước (A)`;
+            prevBtn.onclick = () => prevSingleQuestion();
+
+            // Phần Auto chuyển câu & Delay
+            let autoBox = document.createElement('div');
+            autoBox.className = 'flex items-center gap-3 text-xs theme-input px-3 py-2 rounded-xl border';
+            autoBox.innerHTML = `
+                <label class="flex items-center gap-2 cursor-pointer font-bold text-label">
+                    <input type="checkbox" id="autoNextCheckbox" ${isAutoNextEnabled ? 'checked' : ''} onchange="toggleAutoNext(this)" class="w-4 h-4 text-cyan-500 rounded">
+                    Auto chuyển câu
+                </label>
+                <div class="flex items-center gap-1">
+                    <span class="text-label">Delay:</span>
+                    <input type="number" id="autoDelayInput" min="0.5" max="10" step="0.5" value="${autoNextDelaySeconds}" onchange="updateAutoDelay(this)" class="w-14 theme-input border rounded-lg px-2 py-1 text-center font-bold">
+                    <span class="text-label">s</span>
+                </div>
+            `;
+
+            let nextBtn = document.createElement('button');
+            nextBtn.className = `btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md`;
+            nextBtn.innerHTML = `${currentSingleIndex === questions.length - 1 ? 'Hoàn thành / Nộp bài' : 'Câu Tiếp ➡️ (D)'}`;
+            nextBtn.onclick = () => {
+                if (currentSingleIndex === questions.length - 1) {
+                    submitActiveQuiz();
+                } else {
+                    nextSingleQuestion();
+                }
+            };
+
+            navFooter.appendChild(prevBtn);
+            navFooter.appendChild(autoBox);
+            navFooter.appendChild(nextBtn);
+            qDiv.appendChild(navFooter);
+
+            quizContainer.appendChild(qDiv);
+            document.getElementById('submitQuizBox').classList.add('hidden');
+        }
+
+        function prevSingleQuestion() {
+            if (currentSingleIndex > 0) {
+                currentSingleIndex--;
+                renderSingleQuestion();
+            }
+        }
+
+        function nextSingleQuestion() {
+            if (currentSingleIndex < currentActiveQuestions.length - 1) {
+                currentSingleIndex++;
+                renderSingleQuestion();
+            }
+        }
+
+        function toggleAutoNext(checkbox) {
+            isAutoNextEnabled = checkbox.checked;
+        }
+
+        function updateAutoDelay(input) {
+            autoNextDelaySeconds = parseFloat(input.value) || 1;
         }
 
         function clearQuizProgress() {
             showConfirmModal("Xác Nhận Làm Lại", "Bạn có muốn xóa tiến trình đang làm dở để bắt đầu lại từ đầu không?", () => {
                 localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
-                renderQuiz(currentActiveQuestions);
+                if (isSingleQuestionMode) {
+                    renderSingleQuestion();
+                } else {
+                    renderQuizList(currentActiveQuestions);
+                }
                 showAlertModal("Đã đặt lại tiến trình bài thi!");
             });
         }
 
         async function submitActiveQuiz() {
+            if (autoNextTimer) clearTimeout(autoNextTimer);
             let totalQ = currentActiveQuestions.length;
             let currentScore = 0;
             let pointsPerQuestion = 10 / totalQ;
             let answeredCount = 0;
 
+            let savedProgress = {};
+            try {
+                let localData = localStorage.getItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                if (localData) savedProgress = JSON.parse(localData);
+            } catch(e) {}
+
             currentActiveQuestions.forEach((q, qIndex) => {
-                const selectedRadio = document.querySelector(`input[name="question_${qIndex}"]:checked`);
-                const optionsDiv = document.querySelectorAll('#quizContainer > div')[qIndex].querySelectorAll('label');
-
-                optionsDiv.forEach(l => {
-                    l.classList.add('disabled');
-                    const radioValue = l.querySelector('input').value;
-                    const bSide = l.querySelector('div:last-child');
-                    if (radioValue.trim() === q.correctAnswer.trim()) {
-                        l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
-                        bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
-                    }
-                });
-
-                if (selectedRadio) {
+                let userChoice = savedProgress[qIndex];
+                if (userChoice) {
                     answeredCount++;
-                    let userChoice = selectedRadio.value;
                     if (userChoice.trim() === q.correctAnswer.trim()) {
                         currentScore += pointsPerQuestion;
-                    } else {
-                        optionsDiv.forEach(l => {
-                            if (l.querySelector('input').value === userChoice) {
-                                l.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                                const bSide = l.querySelector('div:last-child');
-                                bSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
-                            }
-                        });
                     }
                 }
             });
@@ -2101,7 +2393,6 @@
                     score: finalScore,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                // Xóa lưu tiến trình dở sau khi nộp bài thành công
                 localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
             } catch (err) {
                 console.error("Lỗi lưu kết quả:", err);
