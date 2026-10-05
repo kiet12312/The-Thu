@@ -366,7 +366,7 @@
                 <div id="tab-feedback" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6 transition-colors duration-500 hover-lift">
                         <div class="text-center space-y-2">
-                            <h3 class="text-xl font-bold text-cyan-500">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <h3 class="text-xl font-bold text-cyan-500">🛠️️ Gửi Góp Ý & Báo Lỗi</h3>
                             <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
                         </div>
 
@@ -389,12 +389,12 @@
                 <!-- TAB 7: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4 transition-colors duration-500 hover-lift">
-                        <h3 class="text-lg font-bold">⚙️ Cài Đặt Hệ Thống</h3>
+                        <h3 class="text-lg font-bold">⚙️️ Cài Đặt Hệ Thống</h3>
                         <div class="space-y-3 text-sm text-label p-4 theme-input border rounded-xl">
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Millisecond Delay Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Blur Focus Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -799,7 +799,11 @@
                 const quizArea = document.getElementById('quizArea');
                 if (!quizArea || quizArea.classList.contains('hidden')) return;
 
-                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                const activeTag = document.activeElement.tagName;
+                const activeType = document.activeElement.type;
+                
+                // Allow keydown if it's a radio/checkbox so we can override default behavior
+                if ((activeTag === 'INPUT' && activeType !== 'radio' && activeType !== 'checkbox') || activeTag === 'TEXTAREA') return;
 
                 const key = e.key.toLowerCase();
 
@@ -828,6 +832,7 @@
                             let radio = currentLabels[optIndex].querySelector('input[type="radio"]');
                             if (radio && !currentLabels[optIndex].classList.contains('disabled')) {
                                 radio.click();
+                                radio.blur(); // Xóa focus ngay lập tức
                             }
                         }
                     } else {
@@ -838,6 +843,7 @@
                                 let radio = labels[optIndex].querySelector('input[type="radio"]');
                                 if (radio) {
                                     radio.click();
+                                    radio.blur(); // Xóa focus ngay lập tức
                                     break;
                                 }
                             }
@@ -1546,7 +1552,7 @@
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="text-lg font-black text-teal-500 bg-teal-500/10 px-3 py-1.5 rounded-xl border border-teal-500/20">${r.score} Điểm</div>
-                            <button onclick="confirmDeleteHistory('${r.id}')" class="btn-interactive bg-red-500/15 hover:bg-red-500/25 text-red-500 p-2 rounded-lg text-xs font-bold transition-colors" title="Xóa kết quả">🗑️️</button>
+                            <button onclick="confirmDeleteHistory('${r.id}')" class="btn-interactive bg-red-500/15 hover:bg-red-500/25 text-red-500 p-2 rounded-lg text-xs font-bold transition-colors" title="Xóa kết quả">🗑</button>
                         </div>
                     `;
                     listDiv.appendChild(item);
@@ -2050,6 +2056,8 @@
             });
 
             radio.checked = true;
+            radio.blur(); // <-- Xóa focus ngay để tránh lỗi mũi tên điều khiển thẻ radio
+
             if (selectedOpt.trim() !== q.correctAnswer.trim()) {
                 label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
                 badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
