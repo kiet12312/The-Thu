@@ -19,20 +19,15 @@
 </head>
 <body class="min-h-screen font-sans flex flex-col">
 
-    <!-- TOP BANNER -->
-    <div class="bg-gradient-to-r from-teal-500 to-cyan-600 text-slate-950 font-bold text-xs md:text-sm py-2 px-4 text-center tracking-wide shadow-md">
-        🚀 Hệ thống trắc nghiệm thông minh kết nối đám mây vĩnh viễn!
-    </div>
-
     <div class="flex flex-1 overflow-hidden">
         
         <!-- SIDEBAR TRÁI (Mã màu #363636) -->
         <aside class="w-64 bg-[#363636] border-r border-[#4a4a4a] flex flex-col justify-between hidden md:flex p-4 shadow-xl">
             <div class="space-y-6">
-                <!-- Logo -->
+                <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2">
-                    <div class="bg-cyan-500 text-slate-950 font-black p-2 rounded-xl text-lg shadow">AI</div>
-                    <span class="font-bold text-lg tracking-wider text-slate-100">Quiz Hub</span>
+                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow border border-[#4a4a4a]">
+                    <span class="font-bold text-lg tracking-wider text-slate-100">TheThuu</span>
                 </div>
 
                 <!-- Menu Navigation -->
@@ -71,11 +66,14 @@
             
             <!-- MOBILE HEADER -->
             <div class="md:hidden flex justify-between items-center bg-[#363636] border border-[#4a4a4a] p-4 rounded-2xl mb-6 shadow">
-                <span class="font-bold text-cyan-400">AI Quiz Hub</span>
+                <div class="flex items-center gap-2">
+                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
+                    <span class="font-bold text-cyan-400">TheThuu</span>
+                </div>
                 <button onclick="logout()" class="text-xs bg-red-500/20 text-red-300 px-3 py-1 rounded-lg">Đăng Xuất</button>
             </div>
 
-            <!-- KHUNG ĐĂNG NHẬP / ĐĂNG KÝ (Mã màu #363636) -->
+            <!-- KHUNG ĐĂNG NHẬP / ĐĂNG KÝ -->
             <div id="authSection" class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-8 max-w-md mx-auto my-auto shadow-2xl w-full">
                 <h2 id="authTitle" class="text-2xl font-bold text-cyan-400 mb-6 text-center">Đăng Nhập Tài Khoản</h2>
                 
@@ -219,7 +217,7 @@
         </main>
     </div>
 
-    <!-- CHESS IT UP STYLE CUSTOM CONFIRM MODAL -->
+    <!-- CUSTOM CONFIRM MODAL -->
     <div id="customModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
             <div class="flex justify-between items-center border-b border-[#4a4a4a] pb-3">
