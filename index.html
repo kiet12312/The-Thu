@@ -382,7 +382,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tự động chia đều)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Glassmorphism & Radial Background</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Share Link & Public Quiz Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -656,9 +656,36 @@
                     loadMyQuizzes();
                     loadPublicQuizzes();
                     loadSharedDocuments();
+                    
+                    // Kiểm tra URL xem có đang mở trực tiếp bộ đề qua link chia sẻ không
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const shareQuizId = urlParams.get('quiz');
+                    if (shareQuizId) {
+                        loadAndStartSharedQuiz(shareQuizId);
+                    }
                 }
             }
         });
+
+        async function loadAndStartSharedQuiz(quizId) {
+            try {
+                // Thử tìm trong public_quizzes trước
+                let doc = await db.collection('public_quizzes').doc(quizId).get();
+                if (doc.exists) {
+                    openQuizRunner(quizId, doc.data());
+                    return;
+                }
+                // Nếu không thấy, tìm trong private_quizzes
+                doc = await db.collection('private_quizzes').doc(quizId).get();
+                if (doc.exists) {
+                    openQuizRunner(quizId, doc.data());
+                    return;
+                }
+                showAlertModal("Không tìm thấy bộ đề trắc nghiệm này hoặc liên kết không hợp lệ!");
+            } catch (err) {
+                showAlertModal("Lỗi tải bộ đề: " + err.message);
+            }
+        }
 
         function getRandomColor(str) {
             let hash = 0;
@@ -851,6 +878,12 @@
                 loadMyQuizzes();
                 loadPublicQuizzes();
                 loadSharedDocuments();
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const shareQuizId = urlParams.get('quiz');
+                if (shareQuizId) {
+                    loadAndStartSharedQuiz(shareQuizId);
+                }
             }
         }
 
@@ -1382,8 +1415,10 @@
                 item.className = 'flex justify-between items-center p-4 theme-input border rounded-xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-cyan-500/30 animate-slide-up';
                 item.style.animationDelay = `${index * 0.05}s`;
                 
+                let shareLink = `${window.location.origin}${window.location.pathname}?quiz=${id}`;
+
                 item.innerHTML = `
-                    <div class="pr-4">
+                    <div class="pr-4 flex-1">
                         <h4 class="font-bold text-sm cursor-default">${quiz.title}</h4>
                         <p class="text-[11px] mt-1.5 text-label flex items-center gap-2">
                             <span class="bg-slate-500/10 dark:bg-slate-500/20 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">${quiz.questions.length} câu</span>
@@ -1391,9 +1426,9 @@
                             ${quiz.shared ? '<span class="text-teal-500 font-bold bg-teal-500/10 px-2 py-0.5 rounded">Đã công khai</span>' : '<span class="text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">Riêng tư</span>'}
                         </p>
                     </div>
-                    <div class="flex gap-2 shrink-0">
+                    <div class="flex gap-2 shrink-0 items-center">
                         <button onclick="startMyQuiz('${id}')" class="btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-teal-500/40">Làm Bài</button>
-                        ${!quiz.shared ? `<button onclick="shareQuiz('${id}')" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3.5 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-cyan-500/40">Chia Sẻ</button>` : ''}
+                        <button onclick="shareQuiz('${id}')" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3.5 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-cyan-500/40">🌐 Chia Sẻ & Copy Link</button>
                         <button onclick="confirmDeleteMyQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>
                     </div>
                 `;
@@ -1403,7 +1438,8 @@
 
         function confirmDeleteMyQuiz(id) {
             showConfirmModal("Xác Nhận Xóa Bộ Đề", "Bạn có chắc chắn muốn xóa bộ đề cá nhân này không?", async () => {
-                await db.collection('private_quizzes').doc(id).delete(); loadMyQuizzes();
+                await db.collection('private_quizzes').doc(id).delete();
+                loadMyQuizzes();
             });
         }
 
@@ -1413,11 +1449,31 @@
             if (!doc.exists) return;
             let quiz = doc.data();
 
+            // Đánh dấu đã chia sẻ nhưng KHÔNG ẩn nút nữa
             await docRef.update({ shared: true });
-            await db.collection('public_quizzes').add({ title: quiz.title, author: currentUser, questions: quiz.questions, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-            showAlertModal("Đã công khai chia sẻ bộ đề lên Thư viện chung thành công!");
-            loadMyQuizzes(); loadPublicQuizzes();
+            // Kiểm tra xem đã có trong public_quizzes chưa, nếu chưa thì thêm mới
+            const publicSnap = await db.collection('public_quizzes').where('title', '==', quiz.title).where('author', '==', currentUser).get();
+            if (publicSnap.empty) {
+                await db.collection('public_quizzes').doc(id).set({
+                    title: quiz.title,
+                    author: currentUser,
+                    questions: quiz.questions,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            let shareLink = `${window.location.origin}${window.location.pathname}?quiz=${id}`;
+            
+            // Copy link vào clipboard
+            navigator.clipboard.writeText(shareLink).then(() => {
+                showAlertModal(`Đã sao chép liên kết chia sẻ vào bộ nhớ tạm!\n\nLink trực tiếp:\n${shareLink}`, "Thành Công!");
+            }).catch(() => {
+                showAlertModal(`Đã công khai bộ đề thành công!\n\nLink trực tiếp:\n${shareLink}`, "Thành Công!");
+            });
+
+            loadMyQuizzes();
+            loadPublicQuizzes();
         }
 
         async function loadPublicQuizzes() {
@@ -1452,7 +1508,8 @@
 
         function confirmDeletePublicQuiz(id) {
             showConfirmModal("Xác Nhận Xóa Bộ Đề Chung", "Bạn có chắc muốn xóa bộ đề này khỏi thư viện chung không?", async () => {
-                await db.collection('public_quizzes').doc(id).delete(); loadPublicQuizzes();
+                await db.collection('public_quizzes').doc(id).delete();
+                loadPublicQuizzes();
             });
         }
 
