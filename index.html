@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Single-Question Mode, Hotkeys & Auto Delay Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Single-Question Mode & Millisecond Delay Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -700,7 +700,7 @@
         let isSingleQuestionMode = false;
         let currentSingleIndex = 0;
         let isAutoNextEnabled = false;
-        let autoNextDelaySeconds = 1;
+        let autoNextDelayMs = 1000; // Mặc định 1000ms (1 giây)
         let autoNextTimer = null;
 
         function toggleTheme() {
@@ -715,7 +715,7 @@
                 bodyEl.classList.remove('dark');
                 localStorage.setItem('quiz_theme', 'light');
                 themeSwitch.className = "theme-switch light-switch";
-                switchIcon.innerText = "☀️️";
+                switchIcon.innerText = "☀️";
                 themeLabel.innerText = "Light Mode";
             } else {
                 htmlEl.classList.add('dark');
@@ -799,10 +799,23 @@
                 const quizArea = document.getElementById('quizArea');
                 if (!quizArea || quizArea.classList.contains('hidden')) return;
 
-                // Nếu đang gõ ở ô input hoặc textarea thì không bắt phím tắt
                 if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
                 const key = e.key.toLowerCase();
+
+                // Phím A hoặc Mũi tên trái -> Lùi về câu trước (ở chế độ từng câu)
+                if (isSingleQuestionMode && (key === 'a' || e.key === 'ArrowLeft')) {
+                    e.preventDefault();
+                    prevSingleQuestion();
+                    return;
+                }
+
+                // Phím D hoặc Mũi tên phải -> Sang câu tiếp theo (ở chế độ từng câu)
+                if (isSingleQuestionMode && (key === 'd' || e.key === 'ArrowRight')) {
+                    e.preventDefault();
+                    nextSingleQuestion();
+                    return;
+                }
 
                 // Phím 1, 2, 3, 4, 5 tương ứng chọn đáp án A, B, C, D, E
                 if (['1', '2', '3', '4', '5'].includes(key)) {
@@ -818,9 +831,7 @@
                             }
                         }
                     } else {
-                        // Ở chế độ danh sách, chọn theo câu hỏi đang nhìn thấy hoặc câu hiện tại
                         let currentQDivs = document.querySelectorAll('#quizContainer > div');
-                        // Chọn câu hỏi đầu tiên chưa làm hoặc đang cuộn tới
                         for (let qi = 0; qi < currentQDivs.length; qi++) {
                             let labels = currentQDivs[qi].querySelectorAll('.option-label');
                             if (labels.length > optIndex && !labels[0].classList.contains('disabled')) {
@@ -832,18 +843,6 @@
                             }
                         }
                     }
-                }
-
-                // Phím D hoặc Mũi tên phải -> Sang câu tiếp theo (trong chế độ từng câu)
-                if (isSingleQuestionMode && (key === 'd' || e.key === 'ArrowRight')) {
-                    e.preventDefault();
-                    nextSingleQuestion();
-                }
-
-                // Phím A hoặc Mũi tên trái -> Lùi về câu trước (trong chế độ từng câu)
-                if (isSingleQuestionMode && (key === 'a' || e.key === 'ArrowLeft')) {
-                    e.preventDefault();
-                    prevSingleQuestion();
                 }
             });
         }
@@ -2169,15 +2168,13 @@
             const q = questions[currentSingleIndex];
             const qDiv = document.createElement('div');
             qDiv.id = 'singleQuestionBox';
-            qDiv.className = 'theme-card border p-8 rounded-3xl shadow-2xl animate-fade-in space-y-6 max-w-3xl mx-auto';
+            qDiv.className = 'theme-card border p-8 rounded-3xl shadow-2xl animate-fade-in space-y-6 max-w-3xl mx-auto w-full';
 
-            // Thanh tiến trình nhỏ trên cùng
             let progressHeader = document.createElement('div');
             progressHeader.className = 'flex justify-between items-center text-xs font-bold text-cyan-500 uppercase tracking-wider border-b border-slate-500/20 pb-3';
-            progressHeader.innerHTML = `<span>Câu hỏi ${currentSingleIndex + 1} / ${questions.length}</span><span>Phím tắt: 1-5 chọn đáp án | A/Trái & D/Phải điều hướng</span>`;
+            progressHeader.innerHTML = `<span>Câu hỏi ${currentSingleIndex + 1} / ${questions.length}</span><span>Phím tắt: 1-5 chọn đáp án | A/Trái & D/Phải điều hướng câu</span>`;
             qDiv.appendChild(progressHeader);
 
-            // Nội dung câu hỏi to rõ
             const questionTitle = document.createElement('h3');
             questionTitle.className = 'text-lg md:text-xl font-bold leading-relaxed';
             questionTitle.innerText = q.question;
@@ -2266,15 +2263,14 @@
                     }
                     document.getElementById('answeredCount').innerText = count;
 
-                    // Xử lý Auto chuyển câu nếu được bật
+                    // Auto chuyển câu dựa trên Delay (mili-giây)
                     if (isAutoNextEnabled && currentSingleIndex < questions.length - 1) {
-                        let delaySec = parseFloat(document.getElementById('autoDelayInput').value) || 1;
                         autoNextTimer = setTimeout(() => {
                             if (isSingleQuestionMode) {
                                 currentSingleIndex++;
                                 renderSingleQuestion();
                             }
-                        }, delaySec * 1000);
+                        }, autoNextDelayMs);
                     }
                 });
 
@@ -2282,7 +2278,6 @@
             });
             qDiv.appendChild(optionsDiv);
 
-            // Bảng điều khiển phía dưới: Nút Lùi, Auto checkbox + Delay, Nút Tiếp theo
             const navFooter = document.createElement('div');
             navFooter.className = 'flex justify-between items-center pt-4 border-t border-slate-500/20 flex-wrap gap-4';
 
@@ -2291,7 +2286,6 @@
             prevBtn.innerHTML = `⬅️ Câu Trước (A)`;
             prevBtn.onclick = () => prevSingleQuestion();
 
-            // Phần Auto chuyển câu & Delay
             let autoBox = document.createElement('div');
             autoBox.className = 'flex items-center gap-3 text-xs theme-input px-3 py-2 rounded-xl border';
             autoBox.innerHTML = `
@@ -2301,8 +2295,8 @@
                 </label>
                 <div class="flex items-center gap-1">
                     <span class="text-label">Delay:</span>
-                    <input type="number" id="autoDelayInput" min="0.5" max="10" step="0.5" value="${autoNextDelaySeconds}" onchange="updateAutoDelay(this)" class="w-14 theme-input border rounded-lg px-2 py-1 text-center font-bold">
-                    <span class="text-label">s</span>
+                    <input type="number" id="autoDelayInput" min="100" max="10000" step="100" value="${autoNextDelayMs}" onchange="updateAutoDelay(this)" class="w-20 theme-input border rounded-lg px-2 py-1 text-center font-bold">
+                    <span class="text-label">ms</span>
                 </div>
             `;
 
@@ -2345,7 +2339,7 @@
         }
 
         function updateAutoDelay(input) {
-            autoNextDelaySeconds = parseFloat(input.value) || 1;
+            autoNextDelayMs = parseInt(input.value) || 1000;
         }
 
         function clearQuizProgress() {
