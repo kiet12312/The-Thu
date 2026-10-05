@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TheThuu</title>
+    <title>TheThuu/title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -289,6 +289,15 @@
         </div>
     </div>
 
+    <!-- CUSTOM ALERT MODAL (THAY THẾ CHO ALERT() MẶC ĐỊNH) -->
+    <div id="customAlertModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4 text-center">
+            <h3 id="alertTitle" class="text-base font-bold text-cyan-400">Thông Báo</h3>
+            <p id="alertMessage" class="text-sm text-slate-200 leading-relaxed"></p>
+            <button onclick="closeAlertModal()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-2.5 rounded-xl text-xs font-bold shadow transition-colors">OK</button>
+        </div>
+    </div>
+
     <!-- CUSTOM CONFIRM MODAL -->
     <div id="customModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
@@ -327,6 +336,17 @@
         let fileContent = '';
         let modalCallback = null;
         let selectedDocFile = null;
+
+        // --- HÀM HIỂN THỊ THÔNG BÁO CHUẨN CHESS IT UP ---
+        function showAlertModal(message, title = "Thông Báo") {
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMessage').innerText = message;
+            document.getElementById('customAlertModal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('customAlertModal').classList.add('hidden');
+        }
 
         function showConfirmModal(title, message, onConfirm) {
             document.getElementById('modalTitle').innerText = title;
@@ -420,21 +440,21 @@
             const username = document.getElementById('usernameInput').value.trim().toLowerCase();
             const password = document.getElementById('passwordInput').value.trim();
 
-            if (!username || !password) return alert("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
+            if (!username || !password) return showAlertModal("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
 
             const userRef = db.collection('users').doc(username);
             const doc = await userRef.get();
 
             if (isRegisterMode) {
-                if (doc.exists) return alert("Tên đăng nhập này đã tồn tại!");
-                if (username === 'admin') return alert("Tên đăng nhập 'admin' đã được bảo lưu!");
+                if (doc.exists) return showAlertModal("Tên đăng nhập này đã tồn tại!");
+                if (username === 'admin') return showAlertModal("Tên đăng nhập 'admin' đã được bảo lưu!");
                 
                 await userRef.set({ password: password, isAdmin: false });
-                alert("Đăng ký thành công!");
+                showAlertModal("Đăng ký thành công!");
                 toggleAuthMode();
             } else {
                 if (!doc.exists || doc.data().password !== password) {
-                    return alert("Tên đăng nhập hoặc mật khẩu không chính xác!");
+                    return showAlertModal("Tên đăng nhập hoặc mật khẩu không chính xác!");
                 }
                 currentUser = username;
                 
@@ -513,16 +533,15 @@
                         });
                         await batch.commit();
 
-                        alert(`Đã xóa thành công tài khoản "${userId}"!`);
+                        showAlertModal(`Đã xóa thành công tài khoản "${userId}"!`);
                         loadAdminPanel();
                     } catch (error) {
-                        alert("Lỗi khi xóa tài khoản: " + error.message);
+                        showAlertModal("Lỗi khi xóa tài khoản: " + error.message);
                     }
                 }
             );
         }
 
-        // --- QUẢN LÝ THƯ VIỆN TÀI LIỆU CHIA SẺ ---
         function openShareDocModal() {
             document.getElementById('docTitleInput').value = '';
             document.getElementById('docLinkInput').value = '';
@@ -558,7 +577,7 @@
             const title = document.getElementById('docTitleInput').value.trim();
             const mode = document.querySelector('input[name="docType"]:checked').value;
 
-            if (!title) return alert("Vui lòng nhập tên tài liệu!");
+            if (!title) return showAlertModal("Vui lòng nhập tên tài liệu!");
 
             let docData = {
                 title: title,
@@ -568,24 +587,23 @@
             };
 
             if (mode === 'file') {
-                if (!selectedDocFile) return alert("Vui lòng chọn file tài liệu!");
-                // Chuyển file sang Base64 để lưu trực tiếp vào Firestore (hoặc text preview)
+                if (!selectedDocFile) return showAlertModal("Vui lòng chọn file tài liệu!");
                 const reader = new FileReader();
                 reader.onload = async function(uploadEvent) {
                     docData.fileData = uploadEvent.target.result;
                     docData.fileName = selectedDocFile.name;
                     await db.collection('shared_documents').add(docData);
-                    alert("Chia sẻ tài liệu thành công!");
+                    showAlertModal("Chia sẻ tài liệu thành công!");
                     closeShareDocModal();
                     loadSharedDocuments();
                 };
                 reader.readAsDataURL(selectedDocFile);
             } else {
                 const link = document.getElementById('docLinkInput').value.trim();
-                if (!link) return alert("Vui lòng nhập đường dẫn (link) tài liệu!");
+                if (!link) return showAlertModal("Vui lòng nhập đường dẫn (link) tài liệu!");
                 docData.fileLink = link;
                 await db.collection('shared_documents').add(docData);
-                alert("Chia sẻ tài liệu thành công!");
+                showAlertModal("Chia sẻ tài liệu thành công!");
                 closeShareDocModal();
                 loadSharedDocuments();
             }
@@ -697,7 +715,7 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            alert("Đã công khai chia sẻ bộ đề lên Thư viện chung thành công!");
+            showAlertModal("Đã công khai chia sẻ bộ đề lên Thư viện chung thành công!");
             loadMyQuizzes();
             loadPublicQuizzes();
         }
@@ -798,9 +816,9 @@
             const quizTitle = document.getElementById('quizTitleInput').value.trim();
             const apiKey = document.getElementById('apiKey').value.trim();
             
-            if (!quizTitle) return alert("Vui lòng nhập tên bộ trắc nghiệm!");
-            if (!apiKey) return alert("Vui lòng nhập Gemini API Key!");
-            if (!fileContent) return alert("Vui lòng tải lên file tài liệu!");
+            if (!quizTitle) return showAlertModal("Vui lòng nhập tên bộ trắc nghiệm!");
+            if (!apiKey) return showAlertModal("Vui lòng nhập Gemini API Key!");
+            if (!fileContent) return showAlertModal("Vui lòng tải lên file tài liệu!");
 
             localStorage.setItem('quiz_gemini_apikey', apiKey);
 
@@ -857,14 +875,14 @@
                 document.getElementById('loadingIndicator').classList.add('hidden');
                 document.getElementById('generateBtn').disabled = false;
                 document.getElementById('quizTitleInput').value = '';
-                alert("Đã tạo và lưu vào bộ sưu tập đám mây thành công!");
+                showAlertModal("Đã tạo và lưu vào bộ sưu tập đám mây thành công!");
                 
                 hideUploadSection();
                 switchTab('my-quizzes');
                 loadMyQuizzes();
 
             } catch (error) {
-                alert("Đã xảy ra lỗi: " + error.message);
+                showAlertModal("Đã xảy ra lỗi: " + error.message);
                 document.getElementById('setupSection').classList.remove('hidden');
                 document.getElementById('generateBtn').disabled = false;
                 document.getElementById('loadingIndicator').classList.add('hidden');
