@@ -382,7 +382,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tự động chia đều)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Share Link & Public Quiz Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Smart AI Parsing & Quiz Editor Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -447,6 +447,31 @@
 
             </div>
         </main>
+    </div>
+
+    <!-- MODAL CHỈNH SỬA BỘ ĐỀ (EDITOR) -->
+    <div id="quizEditorModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="theme-card border rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] flex flex-col animate-pop-in transition-colors duration-500">
+            <div class="flex justify-between items-center border-b border-slate-500/20 pb-3 shrink-0">
+                <div>
+                    <h3 class="text-base font-bold text-cyan-500">Chỉnh Sửa Bộ Đề: <span id="editorQuizTitleDisplay" class="text-teal-500">---</span></h3>
+                    <p class="text-[11px] text-label">Thêm, sửa câu hỏi hoặc chỉnh chính xác đáp án đúng.</p>
+                </div>
+                <button onclick="closeQuizEditor()" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
+            </div>
+
+            <div id="editorQuestionsContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                <!-- Dynamic questions list for editing -->
+            </div>
+
+            <div class="border-t border-slate-500/20 pt-4 flex justify-between items-center shrink-0">
+                <button onclick="addEmptyQuestion()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border hover:bg-cyan-500/10 hover:text-cyan-500">➕ Thêm Câu Hỏi</button>
+                <div class="flex gap-2">
+                    <button onclick="closeQuizEditor()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border">Hủy</button>
+                    <button onclick="saveEditedQuiz()" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-6 py-2 rounded-xl text-xs font-bold shadow">Lưu Thay Đổi 💾</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL XEM CHI TIẾT & ĐỔI MẬT KHẨU (DÀNH CHO ADMIN) -->
@@ -579,6 +604,9 @@
         let userAvatars = {};
         let allUsernames = [];
         let selectedMentionIndex = 0;
+        
+        let editingQuizId = null;
+        let editingQuizQuestions = [];
 
         function toggleTheme() {
             const htmlEl = document.documentElement;
@@ -657,7 +685,6 @@
                     loadPublicQuizzes();
                     loadSharedDocuments();
                     
-                    // Kiểm tra URL xem có đang mở trực tiếp bộ đề qua link chia sẻ không
                     const urlParams = new URLSearchParams(window.location.search);
                     const shareQuizId = urlParams.get('quiz');
                     if (shareQuizId) {
@@ -669,13 +696,11 @@
 
         async function loadAndStartSharedQuiz(quizId) {
             try {
-                // Thử tìm trong public_quizzes trước
                 let doc = await db.collection('public_quizzes').doc(quizId).get();
                 if (doc.exists) {
                     openQuizRunner(quizId, doc.data());
                     return;
                 }
-                // Nếu không thấy, tìm trong private_quizzes
                 doc = await db.collection('private_quizzes').doc(quizId).get();
                 if (doc.exists) {
                     openQuizRunner(quizId, doc.data());
@@ -1415,8 +1440,6 @@
                 item.className = 'flex justify-between items-center p-4 theme-input border rounded-xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-cyan-500/30 animate-slide-up';
                 item.style.animationDelay = `${index * 0.05}s`;
                 
-                let shareLink = `${window.location.origin}${window.location.pathname}?quiz=${id}`;
-
                 item.innerHTML = `
                     <div class="pr-4 flex-1">
                         <h4 class="font-bold text-sm cursor-default">${quiz.title}</h4>
@@ -1427,9 +1450,10 @@
                         </p>
                     </div>
                     <div class="flex gap-2 shrink-0 items-center">
-                        <button onclick="startMyQuiz('${id}')" class="btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-teal-500/40">Làm Bài</button>
-                        <button onclick="shareQuiz('${id}')" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3.5 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300 hover:shadow-cyan-500/40">🌐 Chia Sẻ & Copy Link</button>
-                        <button onclick="confirmDeleteMyQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>
+                        <button onclick="startMyQuiz('${id}')" class="btn-interactive bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300">Làm Bài</button>
+                        <button onclick="openQuizEditor('${id}')" class="btn-interactive bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300">✏️ Sửa</button>
+                        <button onclick="shareQuiz('${id}')" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3 py-2 rounded-lg text-xs font-bold shadow-md transition-all duration-300">🌐 Chia Sẻ</button>
+                        <button onclick="confirmDeleteMyQuiz('${id}')" class="btn-interactive bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-2 rounded-lg text-xs font-bold transition-colors">Xóa</button>
                     </div>
                 `;
                 listDiv.appendChild(item);
@@ -1449,23 +1473,18 @@
             if (!doc.exists) return;
             let quiz = doc.data();
 
-            // Đánh dấu đã chia sẻ nhưng KHÔNG ẩn nút nữa
             await docRef.update({ shared: true });
 
-            // Kiểm tra xem đã có trong public_quizzes chưa, nếu chưa thì thêm mới
-            const publicSnap = await db.collection('public_quizzes').where('title', '==', quiz.title).where('author', '==', currentUser).get();
-            if (publicSnap.empty) {
-                await db.collection('public_quizzes').doc(id).set({
-                    title: quiz.title,
-                    author: currentUser,
-                    questions: quiz.questions,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
+            const publicDocRef = db.collection('public_quizzes').doc(id);
+            await publicDocRef.set({
+                title: quiz.title,
+                author: currentUser,
+                questions: quiz.questions,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
             let shareLink = `${window.location.origin}${window.location.pathname}?quiz=${id}`;
             
-            // Copy link vào clipboard
             navigator.clipboard.writeText(shareLink).then(() => {
                 showAlertModal(`Đã sao chép liên kết chia sẻ vào bộ nhớ tạm!\n\nLink trực tiếp:\n${shareLink}`, "Thành Công!");
             }).catch(() => {
@@ -1474,6 +1493,121 @@
 
             loadMyQuizzes();
             loadPublicQuizzes();
+        }
+
+        async function openQuizEditor(id) {
+            editingQuizId = id;
+            const doc = await db.collection('private_quizzes').doc(id).get();
+            if (!doc.exists) return;
+            let quiz = doc.data();
+            
+            document.getElementById('editorQuizTitleDisplay').innerText = quiz.title;
+            editingQuizQuestions = JSON.parse(JSON.stringify(quiz.questions || []));
+            
+            renderEditorQuestions();
+            
+            const modal = document.getElementById('quizEditorModal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeQuizEditor() {
+            document.getElementById('quizEditorModal').classList.add('hidden');
+            editingQuizId = null;
+            editingQuizQuestions = [];
+        }
+
+        function renderEditorQuestions() {
+            const container = document.getElementById('editorQuestionsContainer');
+            container.innerHTML = '';
+
+            if (editingQuizQuestions.length === 0) {
+                container.innerHTML = '<p class="text-xs text-label italic text-center py-4">Chưa có câu hỏi nào. Hãy bấm "Thêm Câu Hỏi".</p>';
+                return;
+            }
+
+            editingQuizQuestions.forEach((q, idx) => {
+                let div = document.createElement('div');
+                div.className = 'theme-input p-4 rounded-xl border space-y-3 relative group';
+                
+                let optionsHtml = '';
+                for (let i = 0; i < 4; i++) {
+                    let optVal = q.options[i] || '';
+                    let isCorrectChecked = (optVal === q.correctAnswer) ? 'checked' : '';
+                    optionsHtml += `
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct_${idx}" ${isCorrectChecked} onchange="setCorrectOption(${idx}, ${i})" title="Chọn đáp án đúng" class="text-cyan-500">
+                            <input type="text" value="${escapeHtml(optVal)}" oninput="updateOptionText(${idx}, ${i}, this.value)" placeholder="Đáp án ${String.fromCharCode(65+i)}" class="flex-1 theme-input border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-cyan-500">
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="text-xs font-bold text-cyan-500">Câu hỏi ${idx + 1}</span>
+                        <button onclick="removeEditorQuestion(${idx})" class="text-red-500 hover:text-red-600 text-xs font-bold px-2 py-1 rounded bg-red-500/10">Xóa câu</button>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-label mb-1">Nội dung câu hỏi:</label>
+                        <textarea rows="2" oninput="updateQuestionText(${idx}, this.value)" class="w-full theme-input border rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-cyan-500 resize-none">${escapeHtml(q.question || '')}</textarea>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] uppercase font-semibold text-label mb-1">4 Đáp án (Tích chọn đáp án đúng):</label>
+                        ${optionsHtml}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateQuestionText(idx, val) { editingQuizQuestions[idx].question = val; }
+        function updateOptionText(qIdx, optIdx, val) { 
+            editingQuizQuestions[qIdx].options[optIdx] = val; 
+            // Nếu option đang sửa chính là đáp án đúng, cập nhật luôn correctAnswer
+            if (editingQuizQuestions[qIdx].correctAnswer === editingQuizQuestions[qIdx].options[optIdx]) {
+                // Giữ nguyên logic sync
+            }
+        }
+        function setCorrectOption(qIdx, optIdx) {
+            editingQuizQuestions[qIdx].correctAnswer = editingQuizQuestions[qIdx].options[optIdx];
+        }
+        function addEmptyQuestion() {
+            editingQuizQuestions.push({ question: "", options: ["", "", "", ""], correctAnswer: "" });
+            renderEditorQuestions();
+            const container = document.getElementById('editorQuestionsContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+        function removeEditorQuestion(idx) {
+            editingQuizQuestions.splice(idx, 1);
+            renderEditorQuestions();
+        }
+
+        async function saveEditedQuiz() {
+            if (!editingQuizId) return;
+            
+            for (let i = 0; i < editingQuizQuestions.length; i++) {
+                let q = editingQuizQuestions[i];
+                if (!q.question.trim()) return showAlertModal(`Câu hỏi số ${i + 1} đang bị để trống nội dung!`);
+                if (!q.correctAnswer) return showAlertModal(`Câu hỏi số ${i + 1} chưa được chọn đáp án đúng!`);
+            }
+
+            try {
+                // Cập nhật private_quizzes
+                await db.collection('private_quizzes').doc(editingQuizId).update({ questions: editingQuizQuestions });
+
+                // Nếu bộ đề này đã public, cập nhật luôn public_quizzes
+                const publicRef = db.collection('public_quizzes').doc(editingQuizId);
+                const publicDoc = await publicRef.get();
+                if (publicDoc.exists) {
+                    await publicRef.update({ questions: editingQuizQuestions });
+                }
+
+                showAlertModal("Lưu thay đổi bộ đề thành công!");
+                closeQuizEditor();
+                loadMyQuizzes();
+                loadPublicQuizzes();
+            } catch (err) {
+                showAlertModal("Lỗi khi lưu bộ đề: " + err.message);
+            }
         }
 
         async function loadPublicQuizzes() {
@@ -1579,7 +1713,7 @@
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Đọc đoạn sau và trích xuất TOÀN BỘ câu hỏi trắc nghiệm (có 4 đáp án A, B, C, D và 1 đáp án đúng) theo chuẩn JSON Schema.\nVăn bản:\n${chunks[i]}` }] }],
+                            contents: [{ parts: [{ text: `Bạn là trợ lý AI chuyên gia trắc nghiệm học thuật. Hãy phân tích kỹ đoạn văn bản tài liệu dưới đây và trích xuất TOÀN BỘ câu hỏi trắc nghiệm xuất hiện trong đoạn (không bỏ sót bất kỳ câu nào).\n- Mỗi câu hỏi phải có đầy đủ nội dung câu hỏi, 4 đáp án A, B, C, D.\n- Phải xác định chính xác tuyệt đối đáp án đúng (correctAnswer) trùng khớp hoàn toàn với một trong các chuỗi đáp án trong mảng options.\nVăn bản tài liệu:\n${chunks[i]}` }] }],
                             generationConfig: {
                                 responseMimeType: "application/json",
                                 responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { question: { type: "STRING" }, options: { type: "ARRAY", items: { type: "STRING" } }, correctAnswer: { type: "STRING" } }, required: ["question", "options", "correctAnswer"] } }
@@ -1674,7 +1808,7 @@
                         const scoreCountEl = document.getElementById('scoreCount');
                         scoreCountEl.classList.remove('animate-pop-in'); void scoreCountEl.offsetWidth; scoreCountEl.classList.add('animate-pop-in');
 
-                        let isCorrect = (opt === q.correctAnswer);
+                        let isCorrect = (opt.trim() === q.correctAnswer.trim());
                         if (isCorrect) currentScore += pointsPerQuestion;
                         
                         let displayScore = currentScore >= 10 ? 10 : currentScore.toFixed(2);
@@ -1682,7 +1816,7 @@
 
                         allLabels.forEach(l => {
                             const radioValue = l.querySelector('input').value;
-                            if (radioValue === q.correctAnswer) {
+                            if (radioValue.trim() === q.correctAnswer.trim()) {
                                 l.classList.remove('opacity-70'); l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
                                 const checkIcon = document.createElement('span'); checkIcon.innerHTML = '✔'; checkIcon.className = 'ml-auto font-bold text-teal-500 text-lg animate-pop-in'; l.appendChild(checkIcon);
                             } 
