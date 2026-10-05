@@ -126,7 +126,7 @@
 <body class="font-sans dark transition-colors duration-500">
 
     <!-- THANH HEADER PHÍA TRÊN (GHIM CỐ ĐỊNH) -->
-    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-20 shrink-0" id="topHeader">
+    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-25 shrink-0" id="topHeader">
         <span id="themeLabel" class="text-xs font-bold tracking-wider uppercase transition-colors duration-500">Dark Mode</span>
         <div class="theme-switch dark-switch" id="themeSwitchBtn" onclick="toggleTheme()">
             <div class="theme-switch-handle" id="switchHandle">
@@ -138,7 +138,7 @@
     <div class="flex flex-1 overflow-hidden w-full h-[calc(100vh-61px)]">
         
         <!-- SIDEBAR TRÁI (GHIM CỐ ĐỊNH) -->
-        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-500 theme-sidebar z-10 shrink-0 h-full overflow-y-auto custom-scrollbar" id="sidebar">
+        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-500 theme-sidebar z-20 shrink-0 h-full overflow-y-auto custom-scrollbar" id="sidebar">
             <div class="space-y-6">
                 <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2 group cursor-pointer">
@@ -156,6 +156,9 @@
                     </button>
                     <button onclick="switchTab('public-library')" id="nav-public-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:translate-x-1.5 text-sm text-left nav-btn">
                         🌐 Thư Viện Đề Thi Chung
+                    </button>
+                    <button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:translate-x-1.5 text-sm text-left nav-btn">
+                        📊 Lịch Sử Bài Làm
                     </button>
                     <button onclick="switchTab('documents-library')" id="nav-documents-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:translate-x-1.5 text-sm text-left nav-btn">
                         📚 Thư Viện Tài Liệu
@@ -177,9 +180,7 @@
                 <div id="loggedAuthBox" class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5 cursor-pointer group" onclick="triggerAvatarChange()" title="Nhấn để đổi ảnh đại diện">
-                            <div id="sidebarAvatarContainer" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm shadow overflow-hidden border border-cyan-500/50 transition-transform duration-300 group-hover:scale-110 bg-cyan-600">
-                                <!-- Render Avatar here -->
-                            </div>
+                            <div id="sidebarAvatarContainer" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm shadow overflow-hidden border border-cyan-500/50 transition-transform duration-300 group-hover:scale-110 bg-cyan-600"></div>
                             <div class="overflow-hidden">
                                 <span class="text-xs font-bold truncate block max-w-[90px] transition-colors duration-300 group-hover:text-cyan-500" id="sidebarUsername">User</span>
                                 <span class="text-[10px] text-cyan-500 group-hover:underline">Đổi avatar</span>
@@ -260,7 +261,7 @@
 
                     <div class="theme-card border rounded-2xl p-8 shadow-xl text-center space-y-5 transition-colors duration-500 hover-lift">
                         <h2 class="text-3xl font-bold text-cyan-500">Chào mừng bạn quay trở lại!</h2>
-                        <p class="text-sm max-w-lg mx-auto text-label leading-relaxed">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, tham gia chat cộng đồng hoặc gửi góp ý báo lỗi trực tiếp.</p>
+                        <p class="text-sm max-w-lg mx-auto text-label leading-relaxed">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, xem lịch sử làm bài hoặc tham gia chat cộng đồng.</p>
                         <button onclick="switchTab('my-quizzes'); showUploadSection();" class="inline-block btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl text-sm transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/40 hover:-translate-y-1">
                             ➕ Tạo Bộ Đề Mới Ngay
                         </button>
@@ -288,6 +289,16 @@
                         <h3 class="text-lg font-bold mb-6">🌐 Thư Viện Đề Thi Chung (Đã Công Khai)</h3>
                         <div id="publicQuizList" class="space-y-3">
                             <p class="text-xs text-label animate-pulse">Đang tải thư viện chung...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB LỊCH SỬ BÀI LÀM -->
+                <div id="tab-history" class="hidden space-y-6">
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl transition-colors duration-500 hover-lift">
+                        <h3 class="text-lg font-bold mb-6">📊 Lịch Sử Các Bài Thi Đã Làm</h3>
+                        <div id="historyQuizList" class="space-y-3">
+                            <p class="text-xs text-label animate-pulse">Đang tải lịch sử bài làm...</p>
                         </div>
                     </div>
                 </div>
@@ -381,8 +392,8 @@
                         <div class="space-y-3 text-sm text-label p-4 theme-input border rounded-xl">
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
-                            <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tự động chia đều)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Fixed Sidebar & Header Active</b></p>
+                            <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Submit & History Feature Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -435,14 +446,20 @@
                     <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex justify-between items-center shadow-xl transition-colors duration-500">
                         <div>
                             <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-500">Tên Bài Học</h2>
-                            <p class="text-xs text-label mt-1">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span></p>
+                            <p class="text-xs text-label mt-1">Đã chọn: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span> câu</p>
                         </div>
-                        <div class="flex items-center gap-5">
-                            <div class="text-2xl font-black text-teal-500"><span id="scoreCount">0.0</span> / 10</div>
+                        <div class="flex items-center gap-4">
                             <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2.5 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
                         </div>
                     </div>
-                    <div id="quizContainer" class="space-y-5 mb-20"></div>
+                    <div id="quizContainer" class="space-y-5"></div>
+                    
+                    <!-- Nút Nộp Bài -->
+                    <div id="submitQuizBox" class="pt-6 pb-12 flex justify-center">
+                        <button onclick="submitActiveQuiz()" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-10 py-4 rounded-2xl shadow-xl text-base transition-all duration-300 hover:shadow-cyan-500/50 hover:-translate-y-1">
+                            🚀 Nộp Bài & Xem Kết Quả
+                        </button>
+                    </div>
                 </div>
 
             </div>
@@ -606,6 +623,10 @@
         let editingQuizId = null;
         let editingQuizQuestions = [];
 
+        let currentActiveQuestions = [];
+        let activeQuizId = null;
+        let activeQuizTitleText = "";
+
         function toggleTheme() {
             const htmlEl = document.documentElement;
             const bodyEl = document.body;
@@ -682,6 +703,7 @@
                     loadMyQuizzes();
                     loadPublicQuizzes();
                     loadSharedDocuments();
+                    loadQuizHistory();
                     
                     const urlParams = new URLSearchParams(window.location.search);
                     const shareQuizId = urlParams.get('quiz');
@@ -804,7 +826,7 @@
         initAdminAccount();
 
         function switchTab(tabName) {
-            ['home', 'my-quizzes', 'public-library', 'documents-library', 'global-chat', 'feedback', 'settings'].forEach(t => {
+            ['home', 'my-quizzes', 'public-library', 'history', 'documents-library', 'global-chat', 'feedback', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const nav = document.getElementById(`nav-${t}`);
                 if(el) {
@@ -832,6 +854,7 @@
             hideUploadSection();
             document.getElementById('quizArea').classList.add('hidden');
             
+            if(tabName === 'history') loadQuizHistory();
             if(tabName === 'documents-library') loadSharedDocuments();
             if(tabName === 'global-chat') initGlobalChat();
             else if (chatUnsubscribe) {
@@ -901,6 +924,7 @@
                 loadMyQuizzes();
                 loadPublicQuizzes();
                 loadSharedDocuments();
+                loadQuizHistory();
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 const shareQuizId = urlParams.get('quiz');
@@ -1282,7 +1306,8 @@
             resultDiv.innerHTML = resultsSnap.empty ? '<p class="text-label italic">Chưa có lịch sử làm bài thi nào.</p>' : '';
             resultsSnap.forEach(doc => {
                 let r = doc.data();
-                resultDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-teal-500/50 transition-colors"><span class="truncate pr-2">${r.quizTitle}</span><b class="text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded shrink-0">${r.score} Điểm</b></div>`;
+                let timeStr = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString() : 'Vừa xong';
+                resultDiv.innerHTML += `<div class="p-2.5 theme-card rounded-lg border flex justify-between items-center mb-1 shadow-sm hover:border-teal-500/50 transition-colors"><div class="truncate pr-2"><span>${r.quizTitle}</span><span class="block text-[10px] text-label">${timeStr}</span></div><b class="text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded shrink-0">${r.score} Điểm</b></div>`;
             });
 
             const modal = document.getElementById('adminUserDetailModal');
@@ -1316,6 +1341,62 @@
                     showAlertModal(`Đã xóa thành công tài khoản "${userId}"!`);
                     loadAdminPanel();
                 } catch (error) { showAlertModal("Lỗi khi xóa tài khoản: " + error.message); }
+            });
+        }
+
+        // --- HISTORY ---
+        async function loadQuizHistory() {
+            const listDiv = document.getElementById('historyQuizList');
+            listDiv.innerHTML = '<p class="text-xs text-label animate-pulse">Đang tải lịch sử...</p>';
+
+            try {
+                const snapshot = await db.collection('quiz_results').where('username', '==', currentUser).get();
+                if (snapshot.empty) {
+                    listDiv.innerHTML = '<p class="text-xs text-label italic">Bạn chưa hoàn thành bài thi nào. Hãy làm đề thi từ thư viện chung hoặc đề tự tạo!</p>';
+                    return;
+                }
+
+                let results = [];
+                snapshot.forEach(doc => {
+                    results.push({ id: doc.id, ...doc.data() });
+                });
+
+                results.sort((a, b) => {
+                    let timeA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                    let timeB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                    return timeB - timeA;
+                });
+
+                listDiv.innerHTML = '';
+                results.forEach((r, index) => {
+                    let timeStr = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString() : 'Vừa xong';
+                    let item = document.createElement('div');
+                    item.className = 'flex justify-between items-center p-4 theme-input border rounded-xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-cyan-500/30 animate-slide-up';
+                    item.style.animationDelay = `${index * 0.05}s`;
+
+                    item.innerHTML = `
+                        <div class="pr-4 flex-1">
+                            <h4 class="font-bold text-sm cursor-default">${r.quizTitle}</h4>
+                            <p class="text-[11px] mt-1.5 text-label flex items-center gap-2">
+                                <span>Thời gian nộp: <span class="text-cyan-500 font-bold">${timeStr}</span></span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <div class="text-lg font-black text-teal-500 bg-teal-500/10 px-3 py-1.5 rounded-xl border border-teal-500/20">${r.score} Điểm</div>
+                            <button onclick="confirmDeleteHistory('${r.id}')" class="btn-interactive bg-red-500/15 hover:bg-red-500/25 text-red-500 p-2 rounded-lg text-xs font-bold transition-colors" title="Xóa kết quả">🗑️</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(item);
+                });
+            } catch (err) {
+                listDiv.innerHTML = `<p class="text-xs text-red-500">Lỗi tải lịch sử: ${err.message}</p>`;
+            }
+        }
+
+        function confirmDeleteHistory(resultId) {
+            showConfirmModal("Xóa Lịch Sử", "Bạn có chắc muốn xóa kết quả bài thi này khỏi lịch sử không?", async () => {
+                await db.collection('quiz_results').doc(resultId).delete();
+                loadQuizHistory();
             });
         }
 
@@ -1745,10 +1826,8 @@
         async function startMyQuiz(id) { const doc = await db.collection('private_quizzes').doc(id).get(); if (doc.exists) openQuizRunner(id, doc.data()); }
         async function startPublicQuiz(id) { const doc = await db.collection('public_quizzes').doc(id).get(); if (doc.exists) openQuizRunner(id, doc.data()); }
 
-        let activeQuizId = null; let activeQuizTitleText = "";
-
         function openQuizRunner(id, quiz) {
-            activeQuizId = id; activeQuizTitleText = quiz.title;
+            activeQuizId = id; activeQuizTitleText = quiz.title; currentActiveQuestions = quiz.questions;
             const quizArea = document.getElementById('quizArea');
             document.getElementById('activeQuizTitle').innerText = quiz.title;
             
@@ -1761,13 +1840,8 @@
             const quizContainer = document.getElementById('quizContainer');
             quizContainer.innerHTML = '';
             
-            const totalQ = questions.length; const pointsPerQuestion = 10 / totalQ;
-
-            document.getElementById('totalCount').innerText = totalQ;
+            document.getElementById('totalCount').innerText = questions.length;
             document.getElementById('answeredCount').innerText = 0;
-            document.getElementById('scoreCount').innerText = "0.0";
-
-            let currentScore = 0; let answeredQuestions = 0;
 
             questions.forEach((q, qIndex) => {
                 const qDiv = document.createElement('div');
@@ -1794,45 +1868,83 @@
                     textSpan.className = 'font-medium text-sm leading-relaxed'; textSpan.innerText = opt;
 
                     radio.addEventListener('change', () => {
-                        const allLabels = optionsDiv.querySelectorAll('label');
-                        const allRadios = optionsDiv.querySelectorAll('input[type="radio"]');
-
-                        allLabels.forEach(l => { l.classList.add('disabled', 'opacity-70'); l.classList.remove('cursor-pointer', 'hover:shadow-md'); });
-                        allRadios.forEach(r => r.disabled = true);
-                        label.classList.remove('opacity-70');
-
-                        answeredQuestions++; document.getElementById('answeredCount').innerText = answeredQuestions;
-                        
-                        const scoreCountEl = document.getElementById('scoreCount');
-                        scoreCountEl.classList.remove('animate-pop-in'); void scoreCountEl.offsetWidth; scoreCountEl.classList.add('animate-pop-in');
-
-                        let isCorrect = (opt.trim() === q.correctAnswer.trim());
-                        if (isCorrect) currentScore += pointsPerQuestion;
-                        
-                        let displayScore = currentScore >= 10 ? 10 : currentScore.toFixed(2);
-                        scoreCountEl.innerText = displayScore;
-
-                        allLabels.forEach(l => {
-                            const radioValue = l.querySelector('input').value;
-                            if (radioValue.trim() === q.correctAnswer.trim()) {
-                                l.classList.remove('opacity-70'); l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
-                                const checkIcon = document.createElement('span'); checkIcon.innerHTML = '✔'; checkIcon.className = 'ml-auto font-bold text-teal-500 text-lg animate-pop-in'; l.appendChild(checkIcon);
-                            } 
-                            else if (radioValue === opt && !isCorrect) {
-                                l.classList.remove('opacity-70'); l.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-200');
-                                const crossIcon = document.createElement('span'); crossIcon.innerHTML = '❌'; crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in'; l.appendChild(crossIcon);
+                        let answeredCount = 0;
+                        for (let i = 0; i < questions.length; i++) {
+                            if (document.querySelector(`input[name="question_${i}"]:checked`)) {
+                                answeredCount++;
                             }
-                        });
-
-                        if (answeredQuestions === totalQ) {
-                            db.collection('quiz_results').add({ username: currentUser, quizId: activeQuizId, quizTitle: activeQuizTitleText, score: displayScore, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                         }
+                        document.getElementById('answeredCount').innerText = answeredCount;
                     });
 
                     label.appendChild(radio); label.appendChild(textSpan); optionsDiv.appendChild(label);
                 });
                 qDiv.appendChild(optionsDiv); quizContainer.appendChild(qDiv);
             });
+        }
+
+        async function submitActiveQuiz() {
+            let totalQ = currentActiveQuestions.length;
+            let currentScore = 0;
+            let pointsPerQuestion = 10 / totalQ;
+            let answeredCount = 0;
+
+            currentActiveQuestions.forEach((q, qIndex) => {
+                const selectedRadio = document.querySelector(`input[name="question_${qIndex}"]:checked`);
+                const optionsDiv = document.querySelectorAll('#quizContainer > div')[qIndex].querySelectorAll('label');
+
+                optionsDiv.forEach(l => {
+                    l.classList.add('disabled', 'opacity-90');
+                    l.classList.remove('cursor-pointer', 'hover:shadow-md');
+                    const radioValue = l.querySelector('input').value;
+                    if (radioValue.trim() === q.correctAnswer.trim()) {
+                        l.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
+                        if (!l.querySelector('.check-icon')) {
+                            const checkIcon = document.createElement('span');
+                            checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
+                            checkIcon.innerHTML = '✔';
+                            l.appendChild(checkIcon);
+                        }
+                    }
+                });
+
+                if (selectedRadio) {
+                    answeredCount++;
+                    let userChoice = selectedRadio.value;
+                    if (userChoice.trim() === q.correctAnswer.trim()) {
+                        currentScore += pointsPerQuestion;
+                    } else {
+                        optionsDiv.forEach(l => {
+                            if (l.querySelector('input').value === userChoice) {
+                                l.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
+                                const crossIcon = document.createElement('span');
+                                crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
+                                crossIcon.innerHTML = '❌';
+                                l.appendChild(crossIcon);
+                            }
+                        });
+                    }
+                }
+            });
+
+            let finalScore = currentScore >= 10 ? 10 : currentScore.toFixed(2);
+
+            try {
+                await db.collection('quiz_results').add({
+                    username: currentUser,
+                    quizId: activeQuizId,
+                    quizTitle: activeQuizTitleText,
+                    score: finalScore,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (err) {
+                console.error("Lỗi lưu kết quả:", err);
+            }
+
+            document.getElementById('submitQuizBox').classList.add('hidden');
+            showAlertModal(`Bạn đã hoàn thành bài thi!\n\nĐiểm số đạt được: ${finalScore} / 10\n(Đã trả lời ${answeredCount}/${totalQ} câu)`, "Kết Quả Bài Làm");
+            
+            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
