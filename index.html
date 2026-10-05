@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TheThuu</title>
+    <title>TheThuu - Trắc Nghiệm Thông Minh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -21,7 +21,7 @@
 
     <div class="flex flex-1 overflow-hidden">
         
-        <!-- SIDEBAR TRÁI (Mã màu #363636) -->
+        <!-- SIDEBAR TRÁI -->
         <aside class="w-64 bg-[#363636] border-r border-[#4a4a4a] flex flex-col justify-between hidden md:flex p-4 shadow-xl">
             <div class="space-y-6">
                 <!-- Logo & Tên TheThuu -->
@@ -40,6 +40,9 @@
                     </button>
                     <button onclick="switchTab('public-library')" id="nav-public-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
                         🌐 Thư Viện Đề Thi Chung
+                    </button>
+                    <button onclick="switchTab('documents-library')" id="nav-documents-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
+                        📚 Thư Viện Tài Liệu
                     </button>
                     <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-[#444444] hover:text-slate-100 transition-colors text-sm text-left">
                         ⚙ Cài Đặt
@@ -114,7 +117,7 @@
 
                     <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-8 shadow-xl text-center space-y-4">
                         <h2 class="text-2xl font-bold text-cyan-400">Chào mừng bạn quay trở lại!</h2>
-                        <p class="text-sm text-slate-300 max-w-lg mx-auto">Sử dụng thanh menu bên trái để quản lý đề thi cá nhân, khám phá thư viện chung hoặc tạo bộ đề trắc nghiệm mới từ tài liệu của bạn bằng AI.</p>
+                        <p class="text-sm text-slate-300 max-w-lg mx-auto">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, chia sẻ tài liệu học tập hoặc tạo bộ đề trắc nghiệm mới bằng AI.</p>
                         <button onclick="switchTab('my-quizzes'); showUploadSection();" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-lg">
                             ➕ Tạo Bộ Đề Mới Ngay
                         </button>
@@ -146,7 +149,26 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: CÀI ĐẶT -->
+                <!-- TAB 4: THƯ VIỆN TÀI LIỆU CHIA SẺ -->
+                <div id="tab-documents-library" class="hidden space-y-6">
+                    <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl space-y-6">
+                        <div class="flex justify-between items-center flex-wrap gap-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-100">📚 Thư Viện Tài Liệu Chia Sẻ</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Kho tài liệu PDF, Word, PowerPoint hoặc Link học tập từ cộng đồng.</p>
+                            </div>
+                            <button onclick="openShareDocModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-colors shadow-lg flex items-center gap-2">
+                                📤 Chia Sẻ Tài Liệu Mới
+                            </button>
+                        </div>
+
+                        <div id="sharedDocsList" class="space-y-3">
+                            <p class="text-slate-400 text-xs">Đang tải danh sách tài liệu...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
                     <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl space-y-4">
                         <h3 class="text-base font-bold text-slate-100">⚙️ Cài Đặt Hệ Thống</h3>
@@ -158,7 +180,7 @@
                     </div>
                 </div>
 
-                <!-- KHUNG TẠO BÀI MỚI -->
+                <!-- KHUNG TẠO BÀI MỚI (TRẮC NGHIỆM) -->
                 <div id="setupSection" class="hidden bg-[#363636] border border-[#4a4a4a] rounded-2xl p-6 shadow-xl">
                     <h1 class="text-xl font-bold text-cyan-400 mb-2">Tạo Bộ Trắc Nghiệm Mới</h1>
                     <p class="text-slate-300 text-xs mb-6">Quét tài liệu PDF hoặc TXT để tạo bộ đề lưu an toàn vào tài khoản đám mây của bạn.</p>
@@ -217,6 +239,56 @@
         </main>
     </div>
 
+    <!-- MODAL CHIA SẺ TÀI LIỆU -->
+    <div id="shareDocModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex justify-between items-center border-b border-[#4a4a4a] pb-3">
+                <h3 class="text-base font-bold text-cyan-400">Chia Sẻ Tài Liệu Học Tập</h3>
+                <button onclick="closeShareDocModal()" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Tên tài liệu / Tiêu đề:</label>
+                    <input type="text" id="docTitleInput" placeholder="Ví dụ: Tổng hợp công thức Toán cao cấp" class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-2.5 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1 uppercase tracking-wider">Hình thức chia sẻ:</label>
+                    <div class="flex gap-4 mb-2">
+                        <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                            <input type="radio" name="docType" value="file" checked onclick="toggleDocInputMode('file')" class="text-cyan-500"> Tải file (PDF, Word, PPT)
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                            <input type="radio" name="docType" value="link" onclick="toggleDocInputMode('link')" class="text-cyan-500"> Đường dẫn (Link)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Khung Tải File -->
+                <div id="docFileBox">
+                    <div class="border-2 border-dashed border-[#4a4a4a] rounded-xl p-4 text-center bg-[#1C1C1C] hover:border-cyan-500/50 transition-colors cursor-pointer">
+                        <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden">
+                        <label for="docFileInput" class="cursor-pointer flex flex-col items-center justify-center">
+                            <span class="text-slate-200 font-medium text-xs">Chọn file PDF, Word (.doc/.docx) hoặc PPT (.ppt/.pptx)</span>
+                            <span class="text-[11px] text-cyan-400 mt-1" id="docFileName">Chưa chọn file nào</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Khung Nhập Link -->
+                <div id="docLinkBox" class="hidden">
+                    <input type="url" id="docLinkInput" placeholder="Dán link Google Drive, OneDrive hoặc tài liệu web..." class="w-full bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl px-4 py-2.5 text-slate-200 focus:border-cyan-500 outline-none text-sm">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button onclick="closeShareDocModal()" class="bg-[#1C1C1C] hover:bg-[#4a4a4a] text-slate-300 px-4 py-2 rounded-xl text-xs font-bold border border-[#4a4a4a]">Hủy</button>
+                    <button onclick="uploadAndShareDocument()" id="uploadDocBtn" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold shadow">Chia Sẻ Ngay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CUSTOM CONFIRM MODAL -->
     <div id="customModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-[#363636] border border-[#4a4a4a] rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
@@ -254,6 +326,7 @@
         let currentUser = null;
         let fileContent = '';
         let modalCallback = null;
+        let selectedDocFile = null;
 
         function showConfirmModal(title, message, onConfirm) {
             document.getElementById('modalTitle').innerText = title;
@@ -306,12 +379,13 @@
                     switchTab('home');
                     loadMyQuizzes();
                     loadPublicQuizzes();
+                    loadSharedDocuments();
                 }
             }
         });
 
         function switchTab(tabName) {
-            ['home', 'my-quizzes', 'public-library', 'settings'].forEach(t => {
+            ['home', 'my-quizzes', 'public-library', 'documents-library', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const nav = document.getElementById(`nav-${t}`);
                 if(el) el.classList.add('hidden');
@@ -331,6 +405,7 @@
 
             hideUploadSection();
             document.getElementById('quizArea').classList.add('hidden');
+            if(tabName === 'documents-library') loadSharedDocuments();
         }
 
         function toggleAuthMode() {
@@ -379,6 +454,7 @@
                 switchTab('home');
                 loadMyQuizzes();
                 loadPublicQuizzes();
+                loadSharedDocuments();
             }
         }
 
@@ -442,6 +518,126 @@
                     } catch (error) {
                         alert("Lỗi khi xóa tài khoản: " + error.message);
                     }
+                }
+            );
+        }
+
+        // --- QUẢN LÝ THƯ VIỆN TÀI LIỆU CHIA SẺ ---
+        function openShareDocModal() {
+            document.getElementById('docTitleInput').value = '';
+            document.getElementById('docLinkInput').value = '';
+            document.getElementById('docFileName').innerText = 'Chưa chọn file nào';
+            selectedDocFile = null;
+            document.getElementById('shareDocModal').classList.remove('hidden');
+        }
+
+        function closeShareDocModal() {
+            document.getElementById('shareDocModal').classList.add('hidden');
+        }
+
+        function toggleDocInputMode(mode) {
+            if (mode === 'file') {
+                document.getElementById('docFileBox').classList.remove('hidden');
+                document.getElementById('docLinkBox').classList.add('hidden');
+            } else {
+                document.getElementById('docFileBox').classList.add('hidden');
+                document.getElementById('docLinkBox').classList.remove('hidden');
+            }
+        }
+
+        const docFileInput = document.getElementById('docFileInput');
+        docFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                selectedDocFile = file;
+                document.getElementById('docFileName').innerText = file.name;
+            }
+        });
+
+        async function uploadAndShareDocument() {
+            const title = document.getElementById('docTitleInput').value.trim();
+            const mode = document.querySelector('input[name="docType"]:checked').value;
+
+            if (!title) return alert("Vui lòng nhập tên tài liệu!");
+
+            let docData = {
+                title: title,
+                author: currentUser,
+                type: mode,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (mode === 'file') {
+                if (!selectedDocFile) return alert("Vui lòng chọn file tài liệu!");
+                // Chuyển file sang Base64 để lưu trực tiếp vào Firestore (hoặc text preview)
+                const reader = new FileReader();
+                reader.onload = async function(uploadEvent) {
+                    docData.fileData = uploadEvent.target.result;
+                    docData.fileName = selectedDocFile.name;
+                    await db.collection('shared_documents').add(docData);
+                    alert("Chia sẻ tài liệu thành công!");
+                    closeShareDocModal();
+                    loadSharedDocuments();
+                };
+                reader.readAsDataURL(selectedDocFile);
+            } else {
+                const link = document.getElementById('docLinkInput').value.trim();
+                if (!link) return alert("Vui lòng nhập đường dẫn (link) tài liệu!");
+                docData.fileLink = link;
+                await db.collection('shared_documents').add(docData);
+                alert("Chia sẻ tài liệu thành công!");
+                closeShareDocModal();
+                loadSharedDocuments();
+            }
+        }
+
+        async function loadSharedDocuments() {
+            const snapshot = await db.collection('shared_documents').get();
+            let listDiv = document.getElementById('sharedDocsList');
+
+            if (snapshot.empty) {
+                listDiv.innerHTML = '<p class="text-slate-400 text-xs">Chưa có tài liệu nào được chia sẻ trong thư viện.</p>';
+                return;
+            }
+
+            listDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                let data = doc.data();
+                let id = doc.id;
+                let item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-3 bg-[#1C1C1C] border border-[#4a4a4a] rounded-xl hover:border-slate-500 transition-colors';
+                
+                let actionBtn = '';
+                if (data.type === 'file' && data.fileData) {
+                    actionBtn = `<a href="${data.fileData}" download="${data.fileName}" class="bg-teal-600 hover:bg-teal-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">📥 Tải Xuống</a>`;
+                } else if (data.type === 'link' && data.fileLink) {
+                    actionBtn = `<a href="${data.fileLink}" target="_blank" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">🔗 Mở Link</a>`;
+                }
+
+                let deleteBtn = (currentUser === 'admin' || currentUser === data.author) ? 
+                    `<button onclick="confirmDeleteDoc('${id}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg text-xs font-medium">Xóa</button>` : '';
+
+                item.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-slate-200 text-sm">${data.title}</h4>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Chia sẻ bởi: <span class="text-cyan-400 font-medium">@${data.author}</span> • Loại: <span class="text-teal-400 uppercase">${data.type}</span></p>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        ${actionBtn}
+                        ${deleteBtn}
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        function confirmDeleteDoc(id) {
+            showConfirmModal(
+                "Xác Nhận Xóa Tài Liệu",
+                "Bạn có chắc chắn muốn xóa tài liệu này khỏi thư viện chung không?",
+                async () => {
+                    await db.collection('shared_documents').doc(id).delete();
+                    loadSharedDocuments();
                 }
             );
         }
