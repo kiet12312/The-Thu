@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TheThuu</title>
+    <title>TheThuu - Trắc Nghiệm Thông Minh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -23,7 +23,6 @@
         body:not(.dark) .option-label:not(.disabled):hover { background-color: #e2e8f0; border-color: #06b6d4; transform: translateX(4px); }
         .disabled { pointer-events: none; opacity: 0.9; }
 
-        /* Hiệu ứng nút gạt Toggle Switch phong cách mẫu */
         .theme-switch {
             width: 72px;
             height: 36px;
@@ -46,23 +45,15 @@
             align-items: center;
             justify-content: center;
         }
-        /* Trạng thái Dark (Mặt trăng) */
         .dark-switch { background-color: #1e1b4b; border: 1px solid #312e81; }
-        .dark-switch .theme-switch-handle {
-            transform: translateX(36px);
-            background-color: #f3f4f6;
-        }
-        /* Trạng thái Light (Mặt trời) */
+        .dark-switch .theme-switch-handle { transform: translateX(36px); background-color: #f3f4f6; }
         .light-switch { background-color: #38bdf8; border: 1px solid #0284c7; }
-        .light-switch .theme-switch-handle {
-            transform: translateX(0px);
-            background-color: #facc15;
-        }
+        .light-switch .theme-switch-handle { transform: translateX(0px); background-color: #facc15; }
     </style>
 </head>
 <body class="min-h-screen font-sans flex flex-col dark">
 
-    <!-- THANH HEADER PHÍA TRÊN (CHỨA NÚT GẠT SWITCH) -->
+    <!-- THANH HEADER PHÍA TRÊN -->
     <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-200 gap-3" id="topHeader">
         <span id="themeLabel" class="text-xs font-bold tracking-wider uppercase">Dark Mode</span>
         <div class="theme-switch dark-switch" id="themeSwitchBtn" onclick="toggleTheme()">
@@ -166,10 +157,10 @@
                 <div id="tab-home" class="space-y-6">
                     <div id="adminDashboard" class="hidden theme-card border border-red-500/30 rounded-2xl p-6 shadow-xl">
                         <h3 class="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
-                        <p class="text-xs mb-4 text-label">Quản lý toàn bộ người dùng và hệ thống dữ liệu trên đám mây.</p>
+                        <p class="text-xs mb-4 text-label">Quản lý toàn bộ người dùng và hệ thống dữ liệu trên đám mây. Nhấn vào tên thành viên để xem chi tiết.</p>
                         <div class="theme-input border p-4 rounded-xl">
-                            <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-label">Danh Sách Người Dùng Trên Mây</h4>
-                            <div id="adminUserList" class="space-y-1.5 max-h-40 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
+                            <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-label">Danh Sách Thành Viên</h4>
+                            <div id="adminUserList" class="space-y-1.5 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
                         </div>
                     </div>
 
@@ -233,7 +224,7 @@
                         <div class="space-y-3 text-sm text-label">
                             <p>• Tài khoản đang đăng nhập: <b class="text-cyan-400" id="settingsUsername">---</b></p>
                             <p>• Cơ sở dữ liệu đám mây: <b class="text-teal-400">Firebase Firestore (Active)</b></p>
-                            <p>• Trạng thái ghi nhớ: <b class="text-teal-400">Tự động lưu tài khoản & API Key</b></p>
+                            <p>• Thang điểm tối đa: <b class="text-teal-400">10 Điểm (Tự động chia đều)</b></p>
                         </div>
                     </div>
                 </div>
@@ -286,7 +277,7 @@
                             <p class="text-xs text-label">Đã trả lời: <span id="answeredCount">0</span> / <span id="totalCount">0</span></p>
                         </div>
                         <div class="flex items-center gap-4">
-                            <div class="text-xl font-black text-cyan-400"><span id="scoreCount">0</span> Điểm</div>
+                            <div class="text-xl font-black text-cyan-400"><span id="scoreCount">0.0</span> / 10 Điểm</div>
                             <button onclick="backToDashboard()" class="text-xs theme-btn px-3 py-2 rounded-xl font-medium border">Quay lại</button>
                         </div>
                     </div>
@@ -295,6 +286,33 @@
 
             </div>
         </main>
+    </div>
+
+    <!-- MODAL XEM CHI TIẾT & ĐỔI MẬT KHẨU (DÀNH CHO ADMIN) -->
+    <div id="adminUserDetailModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="theme-card border rounded-2xl max-w-xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center border-b pb-3" style="border-color: inherit;">
+                <h3 class="text-base font-bold text-cyan-400">Chi Tiết Tài Khoản: <span id="detailUsername" class="text-teal-400">---</span></h3>
+                <button onclick="closeAdminDetailModal()" class="text-lg font-bold">&times;</button>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-label">Mật khẩu hiện tại:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="detailPasswordInput" class="w-full theme-input border rounded-xl px-3 py-2 outline-none">
+                        <button onclick="updateUserPassword()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl shadow">Đổi MK</button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-2">📂 Bài Đã Đăng / Tạo:</h4>
+                    <div id="detailUserQuizzes" class="p-3 theme-input border rounded-xl space-y-2 max-h-36 overflow-y-auto custom-scrollbar">Đang tải...</div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-200 uppercase tracking-wider mb-2">📊 Kết Quả Bài Thi Đã Làm:</h4>
+                    <div id="detailUserResults" class="p-3 theme-input border rounded-xl space-y-2 max-h-36 overflow-y-auto custom-scrollbar">Đang tải...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL CHIA SẺ TÀI LIỆU -->
@@ -323,7 +341,6 @@
                     </div>
                 </div>
 
-                <!-- Khung Tải File -->
                 <div id="docFileBox">
                     <div class="border-2 border-dashed rounded-xl p-4 text-center theme-input hover:border-cyan-500/50 transition-colors cursor-pointer">
                         <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden">
@@ -334,7 +351,6 @@
                     </div>
                 </div>
 
-                <!-- Khung Nhập Link -->
                 <div id="docLinkBox" class="hidden">
                     <input type="url" id="docLinkInput" placeholder="Dán link Google Drive, OneDrive hoặc tài liệu web..." class="w-full theme-input border rounded-xl px-4 py-2.5 outline-none text-sm">
                 </div>
@@ -394,8 +410,8 @@
         let fileContent = '';
         let modalCallback = null;
         let selectedDocFile = null;
+        let viewingAdminUser = null;
 
-        // --- HÀM GẠT NÚT LIGHT / DARK MODE ---
         function toggleTheme() {
             const htmlEl = document.documentElement;
             const bodyEl = document.body;
@@ -641,6 +657,7 @@
             document.getElementById('passwordInput').value = '';
         }
 
+        // --- ADMIN PANEL: QUẢN LÝ VÀ XEM CHI TIẾT NGƯỜI DÙNG ---
         async function loadAdminPanel() {
             const snapshot = await db.collection('users').get();
             let listDiv = document.getElementById('adminUserList');
@@ -654,20 +671,68 @@
                 
                 let deleteBtnHtml = '';
                 if (userId !== 'admin') {
-                    deleteBtnHtml = `<button onclick="confirmDeleteUser('${userId}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
+                    deleteBtnHtml = `<button onclick="event.stopPropagation(); confirmDeleteUser('${userId}')" class="bg-red-500/25 hover:bg-red-500/35 text-red-400 px-2.5 py-1 rounded-md font-medium transition-colors">Xóa TK</button>`;
                 } else {
                     deleteBtnHtml = `<span class="text-red-400 font-bold">Bảo vệ</span>`;
                 }
 
                 div.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span>👤 <b>${userId}</b></span>
-                        <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'})</span>
+                    <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="openAdminUserDetail('${userId}')">
+                        <span>👤 <b class="text-cyan-400 hover:underline">${userId}</b></span>
+                        <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'}) - Nhấn để xem chi tiết</span>
                     </div>
                     <div>${deleteBtnHtml}</div>
                 `;
                 listDiv.appendChild(div);
             });
+        }
+
+        async function openAdminUserDetail(userId) {
+            viewingAdminUser = userId;
+            document.getElementById('detailUsername').innerText = userId;
+            
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (userDoc.exists) {
+                document.getElementById('detailPasswordInput').value = userDoc.data().password || '';
+            }
+
+            // Tải bài viết/bộ đề của user này
+            const quizzesSnap = await db.collection('private_quizzes').where('author', '==', userId).get();
+            let quizDiv = document.getElementById('detailUserQuizzes');
+            quizDiv.innerHTML = quizzesSnap.empty ? '<p class="text-label">Chưa tạo bộ đề nào.</p>' : '';
+            quizzesSnap.forEach(doc => {
+                let q = doc.data();
+                quizDiv.innerHTML += `<div class="p-2 theme-card rounded border flex justify-between items-center"><span>${q.title}</span><span class="text-[10px] text-label">${q.questions.length} câu</span></div>`;
+            });
+
+            // Tải kết quả thi của user này
+            const resultsSnap = await db.collection('quiz_results').where('username', '==', userId).get();
+            let resultDiv = document.getElementById('detailUserResults');
+            resultDiv.innerHTML = resultsSnap.empty ? '<p class="text-label">Chưa có lịch sử làm bài thi nào.</p>' : '';
+            resultsSnap.forEach(doc => {
+                let r = doc.data();
+                resultDiv.innerHTML += `<div class="p-2 theme-card rounded border flex justify-between items-center"><span>${r.quizTitle}</span><b class="text-teal-400">${r.score} / 10 Điểm</b></div>`;
+            });
+
+            document.getElementById('adminUserDetailModal').classList.remove('hidden');
+        }
+
+        function closeAdminDetailModal() {
+            document.getElementById('adminUserDetailModal').classList.add('hidden');
+            viewingAdminUser = null;
+        }
+
+        async function updateUserPassword() {
+            if (!viewingAdminUser) return;
+            const newPass = document.getElementById('detailPasswordInput').value.trim();
+            if (!newPass) return showAlertModal("Mật khẩu không được để trống!");
+
+            try {
+                await db.collection('users').doc(viewingAdminUser).update({ password: newPass });
+                showAlertModal(`Đã đổi mật khẩu thành công cho tài khoản "${viewingAdminUser}"!`);
+            } catch (err) {
+                showAlertModal("Lỗi: " + err.message);
+            }
         }
 
         function confirmDeleteUser(userId) {
@@ -679,9 +744,7 @@
                         await db.collection('users').doc(userId).delete();
                         const quizzesSnapshot = await db.collection('private_quizzes').where('author', '==', userId).get();
                         const batch = db.batch();
-                        quizzesSnapshot.forEach(doc => {
-                            batch.delete(doc.ref);
-                        });
+                        quizzesSnapshot.forEach(doc => { batch.delete(doc.ref); });
                         await batch.commit();
 
                         showAlertModal(`Đã xóa thành công tài khoản "${userId}"!`);
@@ -1042,15 +1105,20 @@
 
         async function startMyQuiz(id) {
             const doc = await db.collection('private_quizzes').doc(id).get();
-            if (doc.exists) openQuizRunner(doc.data());
+            if (doc.exists) openQuizRunner(id, doc.data());
         }
 
         async function startPublicQuiz(id) {
             const doc = await db.collection('public_quizzes').doc(id).get();
-            if (doc.exists) openQuizRunner(doc.data());
+            if (doc.exists) openQuizRunner(id, doc.data());
         }
 
-        function openQuizRunner(quiz) {
+        let activeQuizId = null;
+        let activeQuizTitleText = "";
+
+        function openQuizRunner(id, quiz) {
+            activeQuizId = id;
+            activeQuizTitleText = quiz.title;
             document.getElementById('activeQuizTitle').innerText = quiz.title;
             document.getElementById('quizArea').classList.remove('hidden');
             renderQuiz(quiz.questions);
@@ -1061,9 +1129,12 @@
             const quizContainer = document.getElementById('quizContainer');
             quizContainer.innerHTML = '';
             
-            document.getElementById('totalCount').innerText = questions.length;
+            const totalQ = questions.length;
+            const pointsPerQuestion = 10 / totalQ;
+
+            document.getElementById('totalCount').innerText = totalQ;
             document.getElementById('answeredCount').innerText = 0;
-            document.getElementById('scoreCount').innerText = 0;
+            document.getElementById('scoreCount').innerText = "0.0";
 
             let currentScore = 0;
             let answeredQuestions = 0;
@@ -1109,9 +1180,11 @@
 
                         let isCorrect = (opt === q.correctAnswer);
                         if (isCorrect) {
-                            currentScore++;
-                            document.getElementById('scoreCount').innerText = currentScore;
+                            currentScore += pointsPerQuestion;
                         }
+                        
+                        let displayScore = currentScore >= 10 ? 10 : currentScore.toFixed(2);
+                        document.getElementById('scoreCount').innerText = displayScore;
 
                         allLabels.forEach(l => {
                             const radioValue = l.querySelector('input').value;
@@ -1130,6 +1203,17 @@
                                 l.appendChild(crossIcon);
                             }
                         });
+
+                        // Khi trả lời xong toàn bộ câu hỏi, lưu kết quả lên Firebase
+                        if (answeredQuestions === totalQ) {
+                            db.collection('quiz_results').add({
+                                username: currentUser,
+                                quizId: activeQuizId,
+                                quizTitle: activeQuizTitleText,
+                                score: displayScore,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
                     });
 
                     label.appendChild(radio);
