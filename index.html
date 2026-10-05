@@ -88,6 +88,12 @@
                     <button onclick="switchTab('documents-library')" id="nav-documents-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         📚 Thư Viện Tài Liệu
                     </button>
+                    <button onclick="switchTab('global-chat')" id="nav-global-chat" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
+                        💬 Chat Chung
+                    </button>
+                    <button onclick="switchTab('feedback')" id="nav-feedback" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
+                        🛠️ Góp Ý Báo Lỗi
+                    </button>
                     <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-left nav-btn">
                         ⚙ Cài Đặt
                     </button>
@@ -155,18 +161,25 @@
                 
                 <!-- TAB 1: TRANG CHỦ -->
                 <div id="tab-home" class="space-y-6">
-                    <div id="adminDashboard" class="hidden theme-card border border-red-500/30 rounded-2xl p-6 shadow-xl">
-                        <h3 class="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
-                        <p class="text-xs mb-4 text-label">Quản lý toàn bộ người dùng và hệ thống dữ liệu trên đám mây. Nhấn vào tên thành viên để xem chi tiết.</p>
-                        <div class="theme-input border p-4 rounded-xl">
-                            <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-label">Danh Sách Thành Viên</h4>
-                            <div id="adminUserList" class="space-y-1.5 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
+                    <div id="adminDashboard" class="hidden theme-card border border-red-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+                        <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">🛠️ Bảng Điều Khiển Quản Trị (Admin Panel)</h3>
+                        <p class="text-xs text-label">Quản lý tài khoản thành viên và xem hòm thư góp ý báo lỗi từ người dùng.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="theme-input border p-4 rounded-xl">
+                                <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-label">Danh Sách Thành Viên</h4>
+                                <div id="adminUserList" class="space-y-1.5 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
+                            </div>
+                            <div class="theme-input border p-4 rounded-xl">
+                                <h4 class="font-bold mb-2 text-xs uppercase tracking-wider text-cyan-400">📥 Hòm Thư Góp Ý & Báo Lỗi</h4>
+                                <div id="adminFeedbackList" class="space-y-2 max-h-48 overflow-y-auto text-xs custom-scrollbar">Đang tải...</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="theme-card border rounded-2xl p-8 shadow-xl text-center space-y-4">
                         <h2 class="text-2xl font-bold text-cyan-400">Chào mừng bạn quay trở lại!</h2>
-                        <p class="text-sm max-w-lg mx-auto text-label">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, chia sẻ tài liệu học tập hoặc tạo bộ đề trắc nghiệm mới bằng AI.</p>
+                        <p class="text-sm max-w-lg mx-auto text-label">Sử dụng thanh menu bên trái để quản lý đề thi, khám phá thư viện chung, tham gia chat cộng đồng hoặc gửi góp ý báo lỗi trực tiếp.</p>
                         <button onclick="switchTab('my-quizzes'); showUploadSection();" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-lg">
                             ➕ Tạo Bộ Đề Mới Ngay
                         </button>
@@ -217,7 +230,55 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: CÀI ĐẶT -->
+                <!-- TAB 5: CHAT CHUNG (GLOBAL CHAT) -->
+                <div id="tab-global-chat" class="hidden space-y-6">
+                    <div class="theme-card border rounded-2xl p-6 shadow-xl flex flex-col h-[650px]">
+                        <div class="border-b pb-3 mb-4 flex justify-between items-center" style="border-color: inherit;">
+                            <div>
+                                <h3 class="text-base font-bold text-cyan-400 flex items-center gap-2">💬 Phòng Chat Cộng Đồng Chung</h3>
+                                <p class="text-xs text-label">Trao đổi, thảo luận kiến thức và kết nối cùng mọi người.</p>
+                            </div>
+                            <span class="text-xs text-teal-400 font-medium">● Trực tuyến</span>
+                        </div>
+
+                        <!-- Khung chứa tin nhắn -->
+                        <div id="chatMessagesBox" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2 mb-4 text-sm">
+                            <p class="text-xs text-label text-center">Đang tải tin nhắn...</p>
+                        </div>
+
+                        <!-- Khung soạn tin nhắn -->
+                        <div class="flex gap-2 pt-2 border-t" style="border-color: inherit;">
+                            <input type="text" id="chatInput" placeholder="Nhập nội dung tin nhắn..." class="flex-1 theme-input border rounded-xl px-4 py-3 outline-none text-sm" onkeypress="handleChatKeyPress(event)">
+                            <button onclick="sendChatMessage()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-xs shadow transition-colors">Gửi 🚀</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: GÓP Ý BÁO LỖI (FEEDBACK) -->
+                <div id="tab-feedback" class="hidden space-y-6">
+                    <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6">
+                        <div class="text-center space-y-2">
+                            <h3 class="text-xl font-bold text-cyan-400">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Tiêu đề / Vấn đề gặp phải:</label>
+                                <input type="text" id="feedbackTitle" placeholder="Ví dụ: Lỗi không quét được file PDF / Gợi ý thêm tính năng..." class="w-full theme-input border rounded-xl px-4 py-3 outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Nội dung chi tiết:</label>
+                                <textarea id="feedbackContent" rows="5" placeholder="Mô tả chi tiết góp ý hoặc lỗi bạn gặp phải..." class="w-full theme-input border rounded-xl p-4 outline-none text-sm custom-scrollbar resize-none"></textarea>
+                            </div>
+                            <button onclick="submitFeedback()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition-colors text-sm shadow-lg">
+                                Gửi Góp Ý Ngay 📤
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 7: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4">
                         <h3 class="text-base font-bold">⚙️ Cài Đặt Hệ Thống</h3>
@@ -411,6 +472,7 @@
         let modalCallback = null;
         let selectedDocFile = null;
         let viewingAdminUser = null;
+        let chatUnsubscribe = null;
 
         function toggleTheme() {
             const htmlEl = document.documentElement;
@@ -528,6 +590,7 @@
                         document.getElementById('sidebarAdminBadge').classList.remove('hidden');
                         document.getElementById('adminDashboard').classList.remove('hidden');
                         loadAdminPanel();
+                        loadAdminFeedback();
                     }
 
                     switchTab('home');
@@ -573,7 +636,7 @@
         initAdminAccount();
 
         function switchTab(tabName) {
-            ['home', 'my-quizzes', 'public-library', 'documents-library', 'settings'].forEach(t => {
+            ['home', 'my-quizzes', 'public-library', 'documents-library', 'global-chat', 'feedback', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 const nav = document.getElementById(`nav-${t}`);
                 if(el) el.classList.add('hidden');
@@ -592,7 +655,13 @@
 
             hideUploadSection();
             document.getElementById('quizArea').classList.add('hidden');
+            
             if(tabName === 'documents-library') loadSharedDocuments();
+            if(tabName === 'global-chat') initGlobalChat();
+            else if (chatUnsubscribe) {
+                chatUnsubscribe();
+                chatUnsubscribe = null;
+            }
         }
 
         function toggleAuthMode() {
@@ -636,6 +705,7 @@
                     document.getElementById('sidebarAdminBadge').classList.remove('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
                     loadAdminPanel();
+                    loadAdminFeedback();
                 }
 
                 switchTab('home');
@@ -648,6 +718,7 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem('quiz_current_user');
+            if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
 
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('authSection').classList.remove('hidden');
@@ -657,7 +728,93 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // --- ADMIN PANEL: QUẢN LÝ VÀ XEM CHI TIẾT NGƯỜI DÙNG ---
+        // --- GLOBAL CHAT REALTIME ---
+        function initGlobalChat() {
+            const chatBox = document.getElementById('chatMessagesBox');
+            chatBox.innerHTML = '<p class="text-xs text-label text-center">Đang kết nối phòng chat...</p>';
+
+            if (chatUnsubscribe) chatUnsubscribe();
+
+            chatUnsubscribe = db.collection('global_chat')
+                .orderBy('createdAt', 'asc')
+                .onSnapshot(snapshot => {
+                    chatBox.innerHTML = '';
+                    if (snapshot.empty) {
+                        chatBox.innerHTML = '<p class="text-xs text-label text-center">Chưa có tin nhắn nào. Hãy là người đầu tiên nhắn tin!</p>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        let msg = doc.data();
+                        let isMe = (msg.username === currentUser);
+                        let msgDiv = document.createElement('div');
+                        msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
+
+                        let bubbleColor = isMe ? 'bg-cyan-500 text-slate-950 font-medium' : 'theme-input border';
+                        let timeStr = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Vừa xong';
+
+                        msgDiv.innerHTML = `
+                            <span class="text-[10px] text-label mb-0.5">@${msg.username} • ${timeStr}</span>
+                            <div class="p-3 rounded-2xl max-w-md text-xs leading-relaxed ${bubbleColor} shadow">
+                                ${escapeHtml(msg.message)}
+                            </div>
+                        `;
+                        chatBox.appendChild(msgDiv);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            try {
+                await db.collection('global_chat').add({
+                    username: currentUser,
+                    message: message,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                input.value = '';
+            } catch (err) {
+                showAlertModal("Lỗi gửi tin nhắn: " + err.message);
+            }
+        }
+
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // --- GÓP Ý BÁO LỖI (FEEDBACK) ---
+        async function submitFeedback() {
+            const title = document.getElementById('feedbackTitle').value.trim();
+            const content = document.getElementById('feedbackContent').value.trim();
+
+            if (!title || !content) return showAlertModal("Vui lòng điền đầy đủ tiêu đề và nội dung góp ý!");
+
+            try {
+                await db.collection('feedbacks').add({
+                    username: currentUser,
+                    title: title,
+                    content: content,
+                    status: 'Chờ xử lý',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showAlertModal("Gửi góp ý báo lỗi thành công! Cảm ơn bạn đã đóng góp.");
+                document.getElementById('feedbackTitle').value = '';
+                document.getElementById('feedbackContent').value = '';
+                switchTab('home');
+            } catch (err) {
+                showAlertModal("Lỗi: " + err.message);
+            }
+        }
+
+        // --- ADMIN PANEL: QUẢN LÝ THÀNH VIÊN & HÒM THƯ GÓP Ý ---
         async function loadAdminPanel() {
             const snapshot = await db.collection('users').get();
             let listDiv = document.getElementById('adminUserList');
@@ -679,12 +836,43 @@
                 div.innerHTML = `
                     <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="openAdminUserDetail('${userId}')">
                         <span>👤 <b class="text-cyan-400 hover:underline">${userId}</b></span>
-                        <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'}) - Nhấn để xem chi tiết</span>
+                        <span class="text-[10px] text-label">(${data.isAdmin ? 'Quản trị viên' : 'Thành viên'})</span>
                     </div>
                     <div>${deleteBtnHtml}</div>
                 `;
                 listDiv.appendChild(div);
             });
+        }
+
+        async function loadAdminFeedback() {
+            const snapshot = await db.collection('feedbacks').orderBy('createdAt', 'desc').get();
+            let box = document.getElementById('adminFeedbackList');
+            box.innerHTML = '';
+
+            if (snapshot.empty) {
+                box.innerHTML = '<p class="text-xs text-label">Chưa có góp ý hoặc báo lỗi nào.</p>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                let f = doc.data();
+                let fId = doc.id;
+                let div = document.createElement('div');
+                div.className = 'theme-card p-2.5 rounded-lg border text-xs space-y-1';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <b class="text-cyan-400">@${f.username}: ${f.title}</b>
+                        <button onclick="deleteFeedback('${fId}')" class="text-red-400 hover:underline">Xóa</button>
+                    </div>
+                    <p class="text-label leading-relaxed">${f.content}</p>
+                `;
+                box.appendChild(div);
+            });
+        }
+
+        async function deleteFeedback(fId) {
+            await db.collection('feedbacks').doc(fId).delete();
+            loadAdminFeedback();
         }
 
         async function openAdminUserDetail(userId) {
@@ -696,7 +884,6 @@
                 document.getElementById('detailPasswordInput').value = userDoc.data().password || '';
             }
 
-            // Tải bài viết/bộ đề của user này
             const quizzesSnap = await db.collection('private_quizzes').where('author', '==', userId).get();
             let quizDiv = document.getElementById('detailUserQuizzes');
             quizDiv.innerHTML = quizzesSnap.empty ? '<p class="text-label">Chưa tạo bộ đề nào.</p>' : '';
@@ -705,7 +892,6 @@
                 quizDiv.innerHTML += `<div class="p-2 theme-card rounded border flex justify-between items-center"><span>${q.title}</span><span class="text-[10px] text-label">${q.questions.length} câu</span></div>`;
             });
 
-            // Tải kết quả thi của user này
             const resultsSnap = await db.collection('quiz_results').where('username', '==', userId).get();
             let resultDiv = document.getElementById('detailUserResults');
             resultDiv.innerHTML = resultsSnap.empty ? '<p class="text-label">Chưa có lịch sử làm bài thi nào.</p>' : '';
@@ -1204,7 +1390,6 @@
                             }
                         });
 
-                        // Khi trả lời xong toàn bộ câu hỏi, lưu kết quả lên Firebase
                         if (answeredQuestions === totalQ) {
                             db.collection('quiz_results').add({
                                 username: currentUser,
