@@ -90,9 +90,9 @@
         body:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; }
         
         .option-label { transition: all 0.3s ease-in-out; }
-        body.dark .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.05); border-color: #06b6d4; transform: translateX(6px); }
-        body:not(.dark) .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.4); border-color: #06b6d4; transform: translateX(6px); }
-        .disabled { pointer-events: none; opacity: 0.9; }
+        body.dark .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.05); border-color: #06b6d4; transform: translateX(4px); }
+        body:not(.dark) .option-label:not(.disabled):hover { background-color: rgba(255, 255, 255, 0.4); border-color: #06b6d4; transform: translateX(4px); }
+        .disabled { pointer-events: none; opacity: 1 !important; }
 
         /* THEME SWITCH TOGGLE */
         .theme-switch {
@@ -394,7 +394,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Auto-Save Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Instant Feedback & Audio FX Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -610,6 +610,59 @@
         const db = firebase.firestore();
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // --- AUDIO FX (WEB AUDIO API) ---
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playCorrectSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                
+                // Âm thanh "Ting-ting" đúng (2 nốt nhạc vui tươi)
+                [523.25, 659.25, 783.99].forEach((freq, i) => {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                    gain.gain.setValueAtTime(0.15, now + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.08);
+                    osc.stop(now + i * 0.08 + 0.25);
+                });
+            } catch(e) {}
+        }
+
+        function playWrongSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                
+                // Âm thanh trầm cảnh báo khi chọn sai
+                let osc = ctx.createOscillator();
+                let gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } catch(e) {}
+        }
 
         let isRegisterMode = false;
         let currentUser = null;
@@ -1546,7 +1599,7 @@
             const snapshot = await db.collection('private_quizzes').where('author', '==', currentUser).get();
             let listDiv = document.getElementById('myQuizList');
 
-            if (snapshot.empty) { listDiv.innerHTML = '<p class="text-xs text-label italic">Bạn chưa tạo bộ đề cá nhân nào.</p>'; return; }
+            if (snapshot.empty) { listDiv.innerHTML = '<p class="text-xs text-label italic">Chưa tạo bộ đề cá nhân nào.</p>'; return; }
 
             listDiv.innerHTML = '';
             snapshot.forEach((doc, index) => {
@@ -1910,33 +1963,37 @@
 
                 q.options.forEach((opt) => {
                     const label = document.createElement('label');
-                    label.className = 'option-label flex items-center p-4 border rounded-xl cursor-pointer theme-input hover:shadow-md';
+                    label.className = 'option-label flex items-center justify-between p-4 border rounded-xl cursor-pointer theme-input hover:shadow-md';
                     
+                    const leftSide = document.createElement('div');
+                    leftSide.className = 'flex items-center gap-3 flex-1 pr-3';
+
                     const radio = document.createElement('input');
                     radio.type = 'radio'; radio.name = `question_${qIndex}`; radio.value = opt;
-                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-500 mr-3 transition-colors';
+                    radio.className = 'w-4 h-4 text-cyan-500 focus:ring-cyan-500 flex-shrink-0';
 
                     const textSpan = document.createElement('span');
                     textSpan.className = 'font-medium text-sm leading-relaxed'; textSpan.innerText = opt;
 
+                    leftSide.appendChild(radio);
+                    leftSide.appendChild(textSpan);
+                    label.appendChild(leftSide);
+
+                    const badgeSide = document.createElement('div');
+                    badgeSide.className = 'flex-shrink-0 flex items-center';
+                    label.appendChild(badgeSide);
+
                     if (userSelectedOpt) {
-                        label.classList.add('disabled', 'opacity-90');
-                        label.classList.remove('cursor-pointer', 'hover:shadow-md');
+                        label.classList.add('disabled');
                         if (opt.trim() === q.correctAnswer.trim()) {
-                            label.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
-                            const checkIcon = document.createElement('span');
-                            checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
-                            checkIcon.innerHTML = '✔';
-                            label.appendChild(checkIcon);
+                            label.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                            badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                         }
                         if (opt === userSelectedOpt) {
                             radio.checked = true;
                             if (userSelectedOpt.trim() !== q.correctAnswer.trim()) {
-                                label.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
-                                const crossIcon = document.createElement('span');
-                                crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
-                                crossIcon.innerHTML = '❌';
-                                label.appendChild(crossIcon);
+                                label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
                             }
                         }
                     }
@@ -1946,24 +2003,22 @@
                         
                         const allLabels = optionsDiv.querySelectorAll('label');
                         allLabels.forEach(l => {
-                            l.classList.add('disabled', 'opacity-90');
-                            l.classList.remove('cursor-pointer', 'hover:shadow-md');
+                            l.classList.add('disabled');
                             const val = l.querySelector('input').value;
+                            const bSide = l.querySelector('div:last-child');
+                            
                             if (val.trim() === q.correctAnswer.trim()) {
-                                l.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
-                                const checkIcon = document.createElement('span');
-                                checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
-                                checkIcon.innerHTML = '✔';
-                                l.appendChild(checkIcon);
+                                l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                                bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                             }
                         });
 
                         if (opt.trim() !== q.correctAnswer.trim()) {
-                            label.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
-                            const crossIcon = document.createElement('span');
-                            crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
-                            crossIcon.innerHTML = '❌';
-                            label.appendChild(crossIcon);
+                            label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                            badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                            playWrongSound();
+                        } else {
+                            playCorrectSound();
                         }
 
                         // Auto-save tiến trình ngay lập tức
@@ -1983,7 +2038,7 @@
                         document.getElementById('answeredCount').innerText = count;
                     });
 
-                    label.appendChild(radio); label.appendChild(textSpan); optionsDiv.appendChild(label);
+                    optionsDiv.appendChild(label);
                 });
                 qDiv.appendChild(optionsDiv); quizContainer.appendChild(qDiv);
             });
@@ -2009,17 +2064,12 @@
                 const optionsDiv = document.querySelectorAll('#quizContainer > div')[qIndex].querySelectorAll('label');
 
                 optionsDiv.forEach(l => {
-                    l.classList.add('disabled', 'opacity-90');
-                    l.classList.remove('cursor-pointer', 'hover:shadow-md');
+                    l.classList.add('disabled');
                     const radioValue = l.querySelector('input').value;
+                    const bSide = l.querySelector('div:last-child');
                     if (radioValue.trim() === q.correctAnswer.trim()) {
-                        l.classList.add('bg-teal-500/25', 'border-teal-500', 'text-teal-600', 'dark:text-teal-200');
-                        if (!l.querySelector('.check-icon')) {
-                            const checkIcon = document.createElement('span');
-                            checkIcon.className = 'check-icon ml-auto font-bold text-teal-500 text-lg animate-pop-in';
-                            checkIcon.innerHTML = '✔';
-                            l.appendChild(checkIcon);
-                        }
+                        l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
+                        bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                     }
                 });
 
@@ -2031,13 +2081,9 @@
                     } else {
                         optionsDiv.forEach(l => {
                             if (l.querySelector('input').value === userChoice) {
-                                if (!l.classList.contains('bg-red-500/25')) {
-                                    l.classList.add('bg-red-500/25', 'border-red-500', 'text-red-600', 'dark:text-red-200');
-                                    const crossIcon = document.createElement('span');
-                                    crossIcon.className = 'ml-auto font-bold text-red-500 text-lg animate-pop-in';
-                                    crossIcon.innerHTML = '❌';
-                                    l.appendChild(crossIcon);
-                                }
+                                l.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
+                                const bSide = l.querySelector('div:last-child');
+                                bSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
                             }
                         });
                     }
