@@ -239,9 +239,9 @@
                     </div>
                 </div>
 
-                <!-- TAB 5: CHAT (GIAO DIỆN CHUẨN HÌNH 2 & TRÀN VIỀN) -->
+                <!-- TAB 5: CHAT (CÓ HỆ THỐNG GỢI Ý TAG MŨI TÊN + THU HỒI & ADMIN XÓA) -->
                 <div id="tab-global-chat" class="hidden flex-1 flex flex-col">
-                    <div class="theme-card border rounded-2xl shadow-xl flex flex-col h-[calc(100vh-140px)] p-6">
+                    <div class="theme-card border rounded-2xl shadow-xl flex flex-col h-[calc(100vh-140px)] p-6 relative">
                         <div class="border-b pb-3 mb-4 flex justify-between items-center" style="border-color: inherit;">
                             <div>
                                 <h3 class="text-base font-bold text-cyan-400">Chat</h3>
@@ -255,6 +255,12 @@
                             <p class="text-xs text-label text-center">Đang tải tin nhắn...</p>
                         </div>
 
+                        <!-- Popup Gợi ý Tag @ (Hỗ trợ mũi tên lên xuống + Enter) -->
+                        <div id="mentionPopup" class="hidden absolute bottom-20 left-6 theme-card border rounded-xl shadow-2xl w-64 max-h-48 overflow-y-auto custom-scrollbar z-50 p-1">
+                            <div class="text-[10px] text-label px-2 py-1 uppercase font-bold border-b mb-1">Gợi ý thành viên</div>
+                            <div id="mentionPopupList" class="space-y-0.5"></div>
+                        </div>
+
                         <!-- Khu vực hiển thị khi đang Trả lời (Reply) tin nhắn -->
                         <div id="replyPreviewBox" class="hidden theme-input border rounded-xl p-2.5 mb-2 flex justify-between items-center text-xs">
                             <div>
@@ -266,7 +272,7 @@
 
                         <!-- Khung soạn tin nhắn tràn viền -->
                         <div class="flex gap-2 pt-2 border-t items-center" style="border-color: inherit;">
-                            <input type="text" id="chatInput" placeholder="Nhập @tên người dùng, tin nhắn tới mọi người..." class="flex-1 theme-input border rounded-xl px-4 py-3 outline-none text-sm" onkeypress="handleChatKeyPress(event)">
+                            <input type="text" id="chatInput" placeholder="Nhập @tên người dùng, tin nhắn tới mọi người..." class="flex-1 theme-input border rounded-xl px-4 py-3 outline-none text-sm" oninput="handleChatInput(event)" onkeydown="handleChatKeyDown(event)">
                             <button onclick="sendChatMessage()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-xs shadow transition-colors">Gửi 🚀</button>
                         </div>
                     </div>
@@ -276,7 +282,7 @@
                 <div id="tab-feedback" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6">
                         <div class="text-center space-y-2">
-                            <h3 class="text-xl font-bold text-cyan-400">🛠️️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <h3 class="text-xl font-bold text-cyan-400">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
                             <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
                         </div>
 
@@ -492,7 +498,9 @@
         let viewingAdminUser = null;
         let chatUnsubscribe = null;
         let replyingTo = null;
-        let userAvatars = {}; // Cache avatar của các user
+        let userAvatars = {};
+        let allUsernames = [];
+        let selectedMentionIndex = 0;
 
         function toggleTheme() {
             const htmlEl = document.documentElement;
@@ -797,17 +805,18 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // --- CHAT STYLE HÌNH 2 (AVATAR TRÒN KÈM BONG BÓNG CHAT) ---
+        // --- CHAT STYLE (TAG POPUP + MŨI TÊN + THU HỒI & ADMIN XÓA) ---
         async function initGlobalChat() {
             const chatBox = document.getElementById('chatMessagesBox');
             chatBox.innerHTML = '<p class="text-xs text-label text-center">Đang kết nối phòng chat...</p>';
 
             if (chatUnsubscribe) chatUnsubscribe();
 
-            // Lấy trước thông tin avatar các user
             const usersSnap = await db.collection('users').get();
+            allUsernames = [];
             usersSnap.forEach(doc => {
                 userAvatars[doc.id] = doc.data().avatar || null;
+                allUsernames.push(doc.id);
             });
 
             chatUnsubscribe = db.collection('global_chat')
@@ -825,13 +834,11 @@
                         let isMe = (msg.username === currentUser);
                         let msgDiv = document.createElement('div');
                         
-                        // Định dạng bố cục chuẩn hình 2: Trái hoặc Phải
                         msgDiv.className = `flex items-start gap-2.5 mb-3 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
 
                         let bubbleStyle = isMe ? 'bg-cyan-500 text-slate-950 font-medium' : 'theme-input border';
                         let timeStr = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Vừa xong';
 
-                        // Render avatar tròn cạnh tin nhắn
                         let uAvatar = userAvatars[msg.username];
                         let avatarHtml = '';
                         if (uAvatar) {
@@ -855,24 +862,177 @@
                         let formattedMsg = escapeHtml(msg.message);
                         formattedMsg = formattedMsg.replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-cyan-300 font-bold bg-cyan-950/40 px-1 py-0.5 rounded">@$1</span>');
 
+                        // Nút hành động: Trả lời, Thu hồi (cho chủ nhân), Xóa (cho admin)
+                        let actionButtonsHtml = `
+                            <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute ${isMe ? '-left-12' : '-right-12'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-md shadow">Trả lời</button>
+                        `;
+
                         msgDiv.innerHTML = `
                             ${avatarHtml}
                             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-lg">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-[10px] font-bold text-label">@${msg.username}</span>
                                     <span class="text-[10px] text-label">${timeStr}</span>
+                                    ${isMe ? `<button onclick="recallMessage('${msgId}')" class="text-[10px] text-red-400 hover:underline ml-1">Thu hồi</button>` : ''}
+                                    <span id="adminDeleteBtn_${msgId}"></span>
                                 </div>
                                 <div class="relative p-3 rounded-2xl text-xs leading-relaxed ${bubbleStyle} shadow">
                                     ${replyHtml}
                                     <div>${formattedMsg}</div>
-                                    <button onclick="setReply('${msgId}', '${msg.username}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="absolute ${isMe ? '-left-12' : '-right-12'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-md shadow">Trả lời</button>
+                                    ${actionButtonsHtml}
                                 </div>
                             </div>
                         `;
                         chatBox.appendChild(msgDiv);
+
+                        // Kiểm tra quyền Admin để hiển thị nút Xóa tin nhắn người khác
+                        db.collection('users').doc(currentUser).get().then(userDoc => {
+                            if (userDoc.exists && userDoc.data().isAdmin) {
+                                const delSpan = document.getElementById(`adminDeleteBtn_${msgId}`);
+                                if (delSpan) {
+                                    delSpan.innerHTML = `<button onclick="adminDeleteMessage('${msgId}')" class="text-[10px] text-red-400 hover:underline font-bold ml-1">Xóa (Admin)</button>`;
+                                }
+                            }
+                        });
                     });
                     chatBox.scrollTop = chatBox.scrollHeight;
                 });
+        }
+
+        async function recallMessage(msgId) {
+            try {
+                await db.collection('global_chat').doc(msgId).delete();
+            } catch (err) {
+                showAlertModal("Lỗi thu hồi tin nhắn: " + err.message);
+            }
+        }
+
+        async function adminDeleteMessage(msgId) {
+            showConfirmModal(
+                "Xác Nhận Xóa Tin Nhắn",
+                "Bạn có chắc muốn xóa tin nhắn này với tư cách Quản trị viên không?",
+                async () => {
+                    try {
+                        await db.collection('global_chat').doc(msgId).delete();
+                    } catch (err) {
+                        showAlertModal("Lỗi xóa tin nhắn: " + err.message);
+                    }
+                }
+            );
+        }
+
+        function handleChatInput(e) {
+            const input = e.target;
+            const val = input.value;
+            const cursorIdx = input.selectionStart;
+            const popup = document.getElementById('mentionPopup');
+
+            // Kiểm tra xem ký tự ngay trước con trỏ có phải là '@' hoặc đang gõ sau '@'
+            const textBeforeCursor = val.substring(0, cursorIdx);
+            const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+
+            if (match) {
+                const query = match[1].toLowerCase();
+                renderMentionPopup(query);
+                popup.classList.remove('hidden');
+            } else {
+                popup.classList.add('hidden');
+            }
+        }
+
+        function renderMentionPopup(query) {
+            const listDiv = document.getElementById('mentionPopupList');
+            listDiv.innerHTML = '';
+
+            // Thêm tùy chọn @All mặc định
+            let filtered = allUsernames.filter(u => u.toLowerCase().includes(query));
+            
+            let allItemHtml = `
+                <div onclick="selectMention('@All')" class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-400 text-xs transition-colors mention-item" data-value="@All">
+                    <div class="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center font-bold text-white text-[10px]">@</div>
+                    <div>
+                        <div class="font-bold">Báo cho cả nhóm</div>
+                        <div class="text-[10px] text-label">@All</div>
+                    </div>
+                </div>
+            `;
+            listDiv.innerHTML += allItemHtml;
+
+            filtered.forEach(uname => {
+                let uAvatar = userAvatars[uname];
+                let avatarIcon = uAvatar ? `<img src="${uAvatar}" class="w-full h-full object-cover">` : `<span class="text-white font-bold text-[10px]">${uname.charAt(0).toUpperCase()}</span>`;
+                let bgCol = uAvatar ? '' : getRandomColor(uname);
+
+                let itemHtml = `
+                    <div onclick="selectMention('${uname}')" class="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-cyan-500/20 hover:text-cyan-400 text-xs transition-colors mention-item" data-value="${uname}">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 shadow" style="background-color: ${bgCol};">${avatarIcon}</div>
+                        <div class="truncate font-bold">${uname}</div>
+                    </div>
+                `;
+                listDiv.innerHTML += itemHtml;
+            });
+
+            selectedMentionIndex = 0;
+            updateMentionSelection();
+        }
+
+        function updateMentionSelection() {
+            const items = document.querySelectorAll('.mention-item');
+            items.forEach((item, idx) => {
+                if (idx === selectedMentionIndex) {
+                    item.classList.add('bg-cyan-500/25', 'text-cyan-400');
+                } else {
+                    item.classList.remove('bg-cyan-500/25', 'text-cyan-400');
+                }
+            });
+        }
+
+        function selectMention(targetName) {
+            const input = document.getElementById('chatInput');
+            const val = input.value;
+            const cursorIdx = input.selectionStart;
+
+            const textBefore = val.substring(0, cursorIdx);
+            const textAfter = val.substring(cursorIdx);
+
+            const newTextBefore = textBefore.replace(/@([a-zA-Z0-9_]*)$/, `@${targetName} `);
+            input.value = newTextBefore + textAfter;
+            
+            document.getElementById('mentionPopup').classList.add('hidden');
+            input.focus();
+        }
+
+        function handleChatKeyDown(e) {
+            const popup = document.getElementById('mentionPopup');
+            const items = document.querySelectorAll('.mention-item');
+
+            if (!popup.classList.contains('hidden') && items.length > 0) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedMentionIndex = (selectedMentionIndex + 1) % items.length;
+                    updateMentionSelection();
+                    return;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedMentionIndex = (selectedMentionIndex - 1 + items.length) % items.length;
+                    updateMentionSelection();
+                    return;
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const selectedItem = items[selectedMentionIndex];
+                    if (selectedItem) {
+                        selectMention(selectedItem.getAttribute('data-value'));
+                    }
+                    return;
+                } else if (e.key === 'Escape') {
+                    popup.classList.add('hidden');
+                    return;
+                }
+            }
+
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
         }
 
         function setReply(id, username, message) {
@@ -907,13 +1067,10 @@
                 await db.collection('global_chat').add(chatData);
                 input.value = '';
                 cancelReply();
+                document.getElementById('mentionPopup').classList.add('hidden');
             } catch (err) {
                 showAlertModal("Lỗi gửi tin nhắn: " + err.message);
             }
-        }
-
-        function handleChatKeyPress(e) {
-            if (e.key === 'Enter') sendChatMessage();
         }
 
         function escapeHtml(text) {
