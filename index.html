@@ -126,8 +126,8 @@
 </head>
 <body class="font-sans dark transition-colors duration-500">
 
-    <!-- THANH HEADER PHÍA TRÊN (GHIM CỐ ĐỊNH) -->
-    <header class="w-full flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-25 shrink-0" id="topHeader">
+    <!-- THANH HEADER PHÍA TRÊN (Ẩn trên điện thoại bằng 'hidden md:flex') -->
+    <header class="w-full hidden md:flex justify-end items-center px-6 py-3 border-b transition-colors duration-500 gap-3 theme-header z-25 shrink-0" id="topHeader">
         <span id="themeLabel" class="text-xs font-bold tracking-wider uppercase transition-colors duration-500">Dark Mode</span>
         <div class="theme-switch dark-switch" id="themeSwitchBtn" onclick="toggleTheme()">
             <div class="theme-switch-handle" id="switchHandle">
@@ -136,11 +136,19 @@
         </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden w-full h-[calc(100vh-61px)]">
+    <div class="flex flex-1 overflow-hidden w-full h-full md:h-[calc(100vh-61px)]">
         
-        <!-- SIDEBAR TRÁI (GHIM CỐ ĐỊNH) -->
-        <aside class="w-64 border-r flex flex-col justify-between hidden md:flex p-4 shadow-xl transition-colors duration-500 theme-sidebar z-20 shrink-0 h-full overflow-y-auto custom-scrollbar" id="sidebar">
+        <!-- MÀN CHẮN ĐEN KHI MỞ MENU MOBILE (OVERLAY) -->
+        <div id="mobileMenuOverlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity duration-300 opacity-0"></div>
+
+        <!-- SIDEBAR TRÁI (Trượt ra trên Mobile, Cố định trên PC) -->
+        <aside class="fixed inset-y-0 left-0 z-40 w-64 transform -translate-x-full md:relative md:translate-x-0 flex flex-col justify-between p-4 shadow-xl transition-transform duration-300 theme-sidebar shrink-0 h-full overflow-y-auto custom-scrollbar" id="sidebar">
             <div class="space-y-6">
+                <!-- Nút Đóng (Chỉ hiện trên mobile) -->
+                <div class="md:hidden flex justify-end">
+                    <button onclick="toggleMobileMenu()" class="text-3xl text-slate-400 hover:text-red-500 font-bold leading-none">&times;</button>
+                </div>
+
                 <!-- Logo & Tên TheThuu -->
                 <div class="flex items-center gap-3 px-2 group cursor-pointer">
                     <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-10 h-10 rounded-xl object-cover shadow border transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
@@ -197,20 +205,23 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA (CHỈ PHẦN NÀY CUỘN) -->
-        <main class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 flex flex-col relative z-0 h-full">
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-10 flex flex-col relative z-0 h-full">
             
-            <!-- MOBILE HEADER -->
-            <div class="md:hidden flex justify-between items-center p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500 shrink-0">
+            <!-- MOBILE HEADER (Đã thêm nút Hamburger) -->
+            <div id="mobileHeader" class="md:hidden flex justify-between items-center p-3 sm:p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500 shrink-0">
                 <div class="flex items-center gap-2">
-                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
-                    <span class="font-bold text-cyan-500">TheThuu</span>
+                    <button onclick="toggleMobileMenu()" class="text-2xl p-1 focus:outline-none hover:text-cyan-500 mr-1 transition-colors">
+                        ☰
+                    </button>
+                    <img src="https://i.ibb.co/ZpHCJcmg/nh-ch-p-m-n-h-nh-2024-02-17-225004.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover hidden sm:block">
+                    <span class="font-bold text-cyan-500 truncate max-w-[90px]">TheThuu</span>
                 </div>
                 <div class="flex gap-2 items-center">
                     <div class="theme-switch dark-switch scale-75 origin-right" onclick="toggleTheme()">
                         <div class="theme-switch-handle"><span class="text-xs">🌙</span></div>
                     </div>
-                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded-lg btn-interactive">Đăng Xuất</button>
+                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-500 px-3 py-1.5 rounded-lg btn-interactive font-bold">Đăng Xuất</button>
                 </div>
             </div>
 
@@ -366,7 +377,7 @@
                 <div id="tab-feedback" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-8 shadow-xl max-w-xl mx-auto space-y-6 transition-colors duration-500 hover-lift">
                         <div class="text-center space-y-2">
-                            <h3 class="text-xl font-bold text-cyan-500">🛠️️ Gửi Góp Ý & Báo Lỗi</h3>
+                            <h3 class="text-xl font-bold text-cyan-500">🛠️ Gửi Góp Ý & Báo Lỗi</h3>
                             <p class="text-xs text-label">Bạn gặp lỗi kỹ thuật hoặc có ý tưởng tính năng muốn đề xuất? Hãy gửi trực tiếp về cho quản trị viên tại đây.</p>
                         </div>
 
@@ -389,12 +400,12 @@
                 <!-- TAB 7: CÀI ĐẶT -->
                 <div id="tab-settings" class="hidden space-y-6">
                     <div class="theme-card border rounded-2xl p-6 shadow-xl space-y-4 transition-colors duration-500 hover-lift">
-                        <h3 class="text-lg font-bold">⚙️️ Cài Đặt Hệ Thống</h3>
+                        <h3 class="text-lg font-bold">⚙️ Cài Đặt Hệ Thống</h3>
                         <div class="space-y-3 text-sm text-label p-4 theme-input border rounded-xl">
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Blur Focus Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Mobile Optimized Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -710,20 +721,29 @@
             const switchIcon = document.getElementById('switchIcon');
             const themeLabel = document.getElementById('themeLabel');
             
+            // Xử lý cả 2 nút (nút desktop và nút mobile)
+            const mobileSwitches = document.querySelectorAll('.theme-switch');
+            
             if (htmlEl.classList.contains('dark')) {
                 htmlEl.classList.remove('dark');
                 bodyEl.classList.remove('dark');
                 localStorage.setItem('quiz_theme', 'light');
-                themeSwitch.className = "theme-switch light-switch";
-                switchIcon.innerText = "☀️";
-                themeLabel.innerText = "Light Mode";
+                if (themeLabel) themeLabel.innerText = "Light Mode";
+                
+                mobileSwitches.forEach(sw => {
+                    sw.className = "theme-switch light-switch " + (sw.classList.contains('scale-75') ? 'scale-75 origin-right' : '');
+                    sw.querySelector('.theme-switch-handle span').innerText = "☀️";
+                });
             } else {
                 htmlEl.classList.add('dark');
                 bodyEl.classList.add('dark');
                 localStorage.setItem('quiz_theme', 'dark');
-                themeSwitch.className = "theme-switch dark-switch";
-                switchIcon.innerText = "🌙";
-                themeLabel.innerText = "Dark Mode";
+                if (themeLabel) themeLabel.innerText = "Dark Mode";
+                
+                mobileSwitches.forEach(sw => {
+                    sw.className = "theme-switch dark-switch " + (sw.classList.contains('scale-75') ? 'scale-75 origin-right' : '');
+                    sw.querySelector('.theme-switch-handle span').innerText = "🌙";
+                });
             }
         }
 
@@ -731,22 +751,25 @@
             const savedTheme = localStorage.getItem('quiz_theme') || 'dark';
             const htmlEl = document.documentElement;
             const bodyEl = document.body;
-            const themeSwitch = document.getElementById('themeSwitchBtn');
-            const switchIcon = document.getElementById('switchIcon');
             const themeLabel = document.getElementById('themeLabel');
+            const mobileSwitches = document.querySelectorAll('.theme-switch');
 
             if (savedTheme === 'light') {
                 htmlEl.classList.remove('dark');
                 bodyEl.classList.remove('dark');
-                themeSwitch.className = "theme-switch light-switch";
-                switchIcon.innerText = "☀️";
-                themeLabel.innerText = "Light Mode";
+                if (themeLabel) themeLabel.innerText = "Light Mode";
+                mobileSwitches.forEach(sw => {
+                    sw.className = "theme-switch light-switch " + (sw.classList.contains('scale-75') ? 'scale-75 origin-right' : '');
+                    sw.querySelector('.theme-switch-handle span').innerText = "☀️";
+                });
             } else {
                 htmlEl.classList.add('dark');
                 bodyEl.classList.add('dark');
-                themeSwitch.className = "theme-switch dark-switch";
-                switchIcon.innerText = "🌙";
-                themeLabel.innerText = "Dark Mode";
+                if (themeLabel) themeLabel.innerText = "Dark Mode";
+                mobileSwitches.forEach(sw => {
+                    sw.className = "theme-switch dark-switch " + (sw.classList.contains('scale-75') ? 'scale-75 origin-right' : '');
+                    sw.querySelector('.theme-switch-handle span').innerText = "🌙";
+                });
             }
 
             const savedUser = localStorage.getItem('quiz_current_user');
@@ -792,6 +815,26 @@
             setupDragAndDrop();
             setupKeyboardHotkeys();
         });
+
+        // --- ĐIỀU KHIỂN MENU MOBILE TRƯỢT RA ---
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                // Mở Menu
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                // Tạo độ trễ nhỏ để hiệu ứng fade in hoạt động mượt
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10); 
+            } else {
+                // Đóng Menu
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                // Chờ hiệu ứng mờ xong rồi mới ẩn hẳn overlay
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
 
         // --- XỬ LÝ PHÍM TẮT BÀN PHÍM ---
         function setupKeyboardHotkeys() {
@@ -1029,6 +1072,12 @@
             else if (chatUnsubscribe) {
                 chatUnsubscribe();
                 chatUnsubscribe = null;
+            }
+
+            // Tự động đóng menu trên thiết bị di động (nếu đang mở)
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+                toggleMobileMenu();
             }
         }
 
