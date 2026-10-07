@@ -16,6 +16,14 @@
         /* --- GENERAL STYLES --- */
         body { transition: background 0.5s ease, color 0.5s ease; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
+        /* --- ẨN HOÀN TOÀN LOGO POWERED BY NETLIFY --- */
+        a[href*="netlify.com"] { 
+            display: none !important; 
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
         /* --- LIGHT MODE (GLASSMORPHISM & GRADIENT) --- */
         body:not(.dark) { 
             background-color: #f8fafc; 
@@ -25,7 +33,7 @@
         }
         body:not(.dark) .theme-header, 
         body:not(.dark) .theme-sidebar { 
-            background-color: rgba(255, 255, 255, 0.65); 
+            background-color: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px);
             border-color: rgba(226, 232, 240, 0.6); 
@@ -59,7 +67,7 @@
         }
         body.dark .theme-header, 
         body.dark .theme-sidebar { 
-            background-color: rgba(19, 19, 20, 0.4); 
+            background-color: rgba(19, 19, 20, 0.75); 
             backdrop-filter: blur(16px); 
             -webkit-backdrop-filter: blur(16px);
             border-color: rgba(255, 255, 255, 0.05); 
@@ -205,8 +213,8 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-10 flex flex-col relative z-0 h-full">
+        <!-- MAIN CONTENT AREA (Đã thêm pb-28 để có khoảng trống dưới đáy cho thanh ghim) -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-10 pb-28 md:pb-32 flex flex-col relative z-0 h-full">
             
             <!-- MOBILE HEADER -->
             <div id="mobileHeader" class="md:hidden flex justify-between items-center p-3 sm:p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500 shrink-0">
@@ -405,7 +413,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Mobile Optimized Navigation Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Fixed Bottom Navigation Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -494,10 +502,15 @@
 
             </div>
         </main>
+        
+        <!-- THANH HEADER Ở ĐÁY (FIXED BOTTOM TOOLBAR - DÀNH CHO CHẾ ĐỘ TỪNG CÂU) -->
+        <!-- z-20 để nó nằm dưới thanh menu bên trái (khi bấm ☰ trên điện thoại, menu đè lên toolbar này) -->
+        <div id="quizBottomToolbar" class="fixed bottom-0 left-0 right-0 md:left-64 z-20 theme-header border-t border-slate-500/20 p-3 md:p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.3)] hidden transition-all duration-300">
+            <!-- Nội dung thanh Toolbar sẽ được tạo tự động bằng JS -->
+        </div>
+
     </div>
 
-    <!-- CÁC MODAL KHÁC ... -->
-    
     <!-- MODAL CHỈNH SỬA BỘ ĐỀ (EDITOR) -->
     <div id="quizEditorModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] flex flex-col animate-pop-in transition-colors duration-500">
@@ -705,7 +718,6 @@
         let activeQuizId = null;
         let activeQuizTitleText = "";
 
-        // Biến trạng thái chế độ từng câu & auto
         let isSingleQuestionMode = false;
         let currentSingleIndex = 0;
         let isAutoNextEnabled = false;
@@ -719,7 +731,6 @@
             const switchIcon = document.getElementById('switchIcon');
             const themeLabel = document.getElementById('themeLabel');
             
-            // Xử lý cả 2 nút (nút desktop và nút mobile)
             const mobileSwitches = document.querySelectorAll('.theme-switch');
             
             if (htmlEl.classList.contains('dark')) {
@@ -814,7 +825,6 @@
             setupKeyboardHotkeys();
         });
 
-        // --- ĐIỀU KHIỂN MENU MOBILE TRƯỢT RA ---
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileMenuOverlay');
@@ -830,7 +840,6 @@
             }
         }
 
-        // --- XỬ LÝ PHÍM TẮT BÀN PHÍM ---
         function setupKeyboardHotkeys() {
             window.addEventListener('keydown', (e) => {
                 const quizArea = document.getElementById('quizArea');
@@ -1055,6 +1064,9 @@
 
             hideUploadSection();
             document.getElementById('quizArea').classList.add('hidden');
+            
+            const qbt = document.getElementById('quizBottomToolbar');
+            if(qbt) qbt.classList.add('hidden');
             
             if(tabName === 'history') loadQuizHistory();
             if(tabName === 'documents-library') loadSharedDocuments();
@@ -1941,6 +1953,7 @@
         function backToDashboard() { 
             if (autoNextTimer) clearTimeout(autoNextTimer);
             document.getElementById('quizArea').classList.add('hidden'); 
+            document.getElementById('quizBottomToolbar').classList.add('hidden');
             loadMyQuizzes(); 
             loadPublicQuizzes(); 
         }
@@ -2128,6 +2141,8 @@
 
         // --- RENDER CHẾ ĐỘ DANH SÁCH ---
         function renderQuizList(questions) {
+            document.getElementById('quizBottomToolbar').classList.add('hidden'); // Ẩn toolbar cố định
+
             const quizContainer = document.getElementById('quizContainer');
             quizContainer.innerHTML = '';
             
@@ -2206,7 +2221,7 @@
             document.getElementById('submitQuizBox').classList.remove('hidden');
         }
 
-        // --- RENDER CHẾ ĐỘ TỪNG CÂU TỐI ƯU MOBILE ---
+        // --- RENDER CHẾ ĐỘ TỪNG CÂU VỚI THANH NAVBAR CỐ ĐỊNH Ở ĐÁY ---
         function renderSingleQuestion() {
             if (autoNextTimer) clearTimeout(autoNextTimer);
             const quizContainer = document.getElementById('quizContainer');
@@ -2298,55 +2313,40 @@
 
                 optionsDiv.appendChild(label);
             });
-            qDiv.appendChild(optionsDiv);
-
-            const navFooter = document.createElement('div');
-            navFooter.className = 'flex flex-col gap-3 pt-3 md:pt-4 border-t border-slate-500/20';
-
-            let autoBox = document.createElement('div');
-            autoBox.className = 'flex items-center justify-between text-xs theme-input px-3 py-2 rounded-xl border';
-            autoBox.innerHTML = `
-                <label class="flex items-center gap-2 cursor-pointer font-bold text-label">
-                    <input type="checkbox" id="autoNextCheckbox" ${isAutoNextEnabled ? 'checked' : ''} onchange="toggleAutoNext(this)" class="w-4 h-4 text-cyan-500 rounded">
-                    Auto
-                </label>
-                <div class="flex items-center gap-1">
-                    <input type="number" id="autoDelayInput" min="100" max="10000" step="100" value="${autoNextDelayMs}" onchange="updateAutoDelay(this)" class="w-16 theme-input border rounded-lg px-2 py-1 text-center font-bold text-[11px] md:text-xs">
-                    <span class="text-[10px] md:text-xs text-label">ms</span>
-                </div>
-            `;
-
-            let btnGroup = document.createElement('div');
-            btnGroup.className = 'flex gap-2 w-full';
-
-            let prevBtn = document.createElement('button');
-            prevBtn.className = `flex-1 btn-interactive theme-btn py-3 md:py-3.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-1 ${currentSingleIndex === 0 ? 'opacity-40 pointer-events-none' : ''}`;
-            prevBtn.innerHTML = `⬅️ <span class="hidden sm:inline">Câu Trước</span><span class="sm:hidden">Trước</span>`;
-            prevBtn.onclick = () => prevSingleQuestion();
-
-            let nextBtn = document.createElement('button');
-            nextBtn.className = `flex-1 btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-3 md:py-3.5 rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-1`;
-            nextBtn.innerHTML = currentSingleIndex === questions.length - 1
-                ? `Nộp Bài 🚀`
-                : `<span class="hidden sm:inline">Câu Tiếp</span><span class="sm:hidden">Tiếp</span> ➡️`;
-            nextBtn.onclick = () => {
-                if (currentSingleIndex === questions.length - 1) {
-                    submitActiveQuiz();
-                } else {
-                    nextSingleQuestion();
-                }
-            };
-
-            btnGroup.appendChild(prevBtn);
-            btnGroup.appendChild(nextBtn);
-
-            navFooter.appendChild(autoBox);
-            navFooter.appendChild(btnGroup);
             
-            qDiv.appendChild(navFooter);
-
+            qDiv.appendChild(optionsDiv);
             quizContainer.appendChild(qDiv);
             document.getElementById('submitQuizBox').classList.add('hidden');
+
+            // Hiển thị thanh Toolbar ở dưới cùng và chèn các nút tương ứng vào
+            const toolbar = document.getElementById('quizBottomToolbar');
+            toolbar.classList.remove('hidden');
+            
+            toolbar.innerHTML = `
+                <div class="max-w-3xl mx-auto w-full flex gap-2 md:gap-4 items-center justify-between">
+                    <!-- Khối Auto -->
+                    <div class="flex items-center justify-between text-xs theme-input px-3 py-2 md:py-2.5 rounded-xl border shrink-0 shadow-inner">
+                        <label class="flex items-center gap-1.5 cursor-pointer font-bold text-label">
+                            <input type="checkbox" id="autoNextCheckbox" ${isAutoNextEnabled ? 'checked' : ''} onchange="toggleAutoNext(this)" class="w-4 h-4 text-cyan-500 rounded focus:ring-cyan-500">
+                            <span class="hidden sm:inline">Auto</span>
+                        </label>
+                        <div class="flex items-center gap-1 ml-2 border-l border-slate-500/30 pl-2">
+                            <input type="number" id="autoDelayInput" min="100" max="10000" step="100" value="${autoNextDelayMs}" onchange="updateAutoDelay(this)" class="w-12 sm:w-16 bg-transparent border-b border-cyan-500/50 text-center font-bold text-[11px] sm:text-xs outline-none">
+                            <span class="text-[10px] sm:text-xs text-label">ms</span>
+                        </div>
+                    </div>
+
+                    <!-- Khối Nút -->
+                    <div class="flex gap-2 flex-1">
+                        <button onclick="prevSingleQuestion()" class="flex-1 btn-interactive theme-btn py-2 md:py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-1 shadow-sm ${currentSingleIndex === 0 ? 'opacity-40 pointer-events-none' : ''}">
+                            ⬅️ <span class="hidden sm:inline">Câu Trước</span><span class="sm:hidden">Trước</span>
+                        </button>
+                        <button onclick="${currentSingleIndex === questions.length - 1 ? 'submitActiveQuiz()' : 'nextSingleQuestion()'}" class="flex-1 btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-2 md:py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-1">
+                            ${currentSingleIndex === questions.length - 1 ? 'Nộp Bài 🚀' : '<span class="hidden sm:inline">Câu Tiếp</span><span class="sm:hidden">Tiếp</span> ➡️'}
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         function prevSingleQuestion() {
@@ -2385,6 +2385,10 @@
 
         async function submitActiveQuiz() {
             if (autoNextTimer) clearTimeout(autoNextTimer);
+            
+            // Ẩn toolbar cố định đi
+            document.getElementById('quizBottomToolbar').classList.add('hidden');
+            
             let totalQ = currentActiveQuestions.length;
             let currentScore = 0;
             let pointsPerQuestion = 10 / totalQ;
