@@ -208,7 +208,7 @@
         <!-- MAIN CONTENT AREA -->
         <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-10 flex flex-col relative z-0 h-full">
             
-            <!-- MOBILE HEADER (Đã thêm nút Hamburger) -->
+            <!-- MOBILE HEADER -->
             <div id="mobileHeader" class="md:hidden flex justify-between items-center p-3 sm:p-4 rounded-2xl mb-6 shadow theme-card transition-colors duration-500 shrink-0">
                 <div class="flex items-center gap-2">
                     <button onclick="toggleMobileMenu()" class="text-2xl p-1 focus:outline-none hover:text-cyan-500 mr-1 transition-colors">
@@ -405,7 +405,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Hoạt động tốt)</b></p>
                             <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
-                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Unified Selection & Mobile Optimized Active</b></p>
+                            <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Mobile Optimized Navigation Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -456,33 +456,35 @@
 
                 <!-- GIAO DIỆN LÀM BÀI (QUIZ) -->
                 <div id="quizArea" class="hidden space-y-6 animate-fade-in">
-                    <div id="scoreBoard" class="sticky top-4 z-40 theme-card border rounded-2xl p-5 flex flex-wrap justify-between items-center shadow-xl gap-4 transition-colors duration-500">
-                        <div>
-                            <h2 id="activeQuizTitle" class="text-lg font-bold text-cyan-500">Tên Bài Học</h2>
-                            <p class="text-xs text-label mt-1">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span> câu</p>
+                    
+                    <!-- BẢNG ĐIỂM TỐI ƯU MOBILE -->
+                    <div id="scoreBoard" class="sticky top-2 md:top-4 z-40 theme-card border rounded-xl md:rounded-2xl p-3 md:p-5 flex flex-wrap justify-between items-center shadow-xl gap-2 md:gap-4 transition-colors duration-500">
+                        <div class="flex-1 min-w-[120px]">
+                            <h2 id="activeQuizTitle" class="text-sm md:text-lg font-bold text-cyan-500 truncate">Tên Bài Học</h2>
+                            <p class="text-[10px] md:text-xs text-label mt-0.5">Đã trả lời: <span id="answeredCount" class="font-bold">0</span> / <span id="totalCount" class="font-bold">0</span></p>
                         </div>
 
                         <!-- CÔNG TẮC & ĐIỀU KHIỂN CHẾ ĐỘ TỪNG CÂU -->
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <div class="flex items-center gap-2 theme-input px-3 py-1.5 rounded-xl border">
-                                <span class="text-xs font-semibold text-label">Chế độ từng câu:</span>
+                        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+                            <div class="flex items-center gap-1.5 theme-input px-2 md:px-3 py-1.5 rounded-lg md:rounded-xl border">
+                                <span class="text-[10px] md:text-xs font-semibold text-label">Single:</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="singleQuestionModeToggle" class="sr-only peer" onchange="toggleSingleQuestionMode()">
-                                    <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                                    <div class="w-8 h-4 md:w-9 md:h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 md:after:h-4 md:after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
                                 </label>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <button onclick="clearQuizProgress()" class="text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-3 py-2 rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 Làm Lại</button>
-                                <button onclick="backToDashboard()" class="text-xs btn-interactive theme-btn px-4 py-2 rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát Bài</button>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="clearQuizProgress()" class="text-[10px] md:text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 <span class="hidden md:inline">Làm Lại</span></button>
+                                <button onclick="backToDashboard()" class="text-[10px] md:text-xs btn-interactive theme-btn px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- CONTAINER CHỨA NỘI DUNG BÀI LÀM (DANH SÁCH HOẶC TỪNG CÂU) -->
+                    <!-- CONTAINER CHỨA NỘI DUNG BÀI LÀM -->
                     <div id="quizContainer" class="space-y-5"></div>
                     
-                    <!-- Nút Nộp Bài -->
+                    <!-- Nút Nộp Bài cho chế độ List -->
                     <div id="submitQuizBox" class="pt-6 pb-12 flex justify-center">
                         <button onclick="submitActiveQuiz()" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-10 py-4 rounded-2xl shadow-xl text-base transition-all duration-300 hover:shadow-cyan-500/50 hover:-translate-y-1">
                             🚀 Nộp Bài & Xem Kết Quả
@@ -494,6 +496,8 @@
         </main>
     </div>
 
+    <!-- CÁC MODAL KHÁC ... -->
+    
     <!-- MODAL CHỈNH SỬA BỘ ĐỀ (EDITOR) -->
     <div id="quizEditorModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] flex flex-col animate-pop-in transition-colors duration-500">
@@ -504,9 +508,7 @@
                 </div>
                 <button onclick="closeQuizEditor()" class="text-2xl font-bold text-slate-400 hover:text-red-500 transition-colors">&times;</button>
             </div>
-
             <div id="editorQuestionsContainer" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2"></div>
-
             <div class="border-t border-slate-500/20 pt-4 flex justify-between items-center shrink-0">
                 <button onclick="addEmptyQuestion()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border hover:bg-cyan-500/10 hover:text-cyan-500">➕ Thêm Câu Hỏi</button>
                 <div class="flex gap-2">
@@ -517,7 +519,7 @@
         </div>
     </div>
 
-    <!-- MODAL XEM CHI TIẾT & ĐỔI MẬT KHẨU (DÀNH CHO ADMIN) -->
+    <!-- MODAL XEM CHI TIẾT ADMIN -->
     <div id="adminUserDetailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300">
         <div class="theme-card border rounded-2xl max-w-xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar animate-pop-in transition-colors duration-500">
             <div class="flex justify-between items-center border-b border-slate-500/20 pb-3">
@@ -557,7 +559,6 @@
                     <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Tên tài liệu / Tiêu đề:</label>
                     <input type="text" id="docTitleInput" placeholder="Ví dụ: Tổng hợp công thức Toán cao cấp" class="w-full theme-input border rounded-xl px-4 py-2.5 outline-none text-sm transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50">
                 </div>
-
                 <div>
                     <label class="block text-xs font-medium mb-1 uppercase tracking-wider text-label">Hình thức chia sẻ:</label>
                     <div class="flex gap-4 mb-2">
@@ -571,7 +572,6 @@
                         </label>
                     </div>
                 </div>
-
                 <div id="docFileBox" class="animate-fade-in">
                     <div class="border-2 border-dashed rounded-xl p-6 text-center theme-input hover:border-cyan-500/50 transition-colors duration-300 cursor-pointer group">
                         <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" class="hidden">
@@ -581,11 +581,9 @@
                         </label>
                     </div>
                 </div>
-
                 <div id="docLinkBox" class="hidden animate-fade-in">
                     <input type="url" id="docLinkInput" placeholder="Dán link Google Drive, OneDrive hoặc tài liệu web..." class="w-full theme-input border rounded-xl px-4 py-2.5 outline-none text-sm transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50">
                 </div>
-
                 <div class="flex justify-end gap-3 pt-2">
                     <button onclick="closeShareDocModal()" class="btn-interactive theme-btn px-4 py-2 rounded-xl text-xs font-bold border transition-colors hover:bg-red-500/10 hover:text-red-500">Hủy</button>
                     <button onclick="uploadAndShareDocument()" id="uploadDocBtn" class="btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2 rounded-xl text-xs font-bold shadow transition-all duration-300 hover:shadow-cyan-500/40">Chia Sẻ Ngay</button>
@@ -822,16 +820,12 @@
             const overlay = document.getElementById('mobileMenuOverlay');
             
             if (sidebar.classList.contains('-translate-x-full')) {
-                // Mở Menu
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
-                // Tạo độ trễ nhỏ để hiệu ứng fade in hoạt động mượt
                 setTimeout(() => overlay.classList.remove('opacity-0'), 10); 
             } else {
-                // Đóng Menu
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('opacity-0');
-                // Chờ hiệu ứng mờ xong rồi mới ẩn hẳn overlay
                 setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
@@ -845,26 +839,22 @@
                 const activeTag = document.activeElement.tagName;
                 const activeType = document.activeElement.type;
                 
-                // Allow keydown if it's a radio/checkbox so we can override default behavior
                 if ((activeTag === 'INPUT' && activeType !== 'radio' && activeType !== 'checkbox') || activeTag === 'TEXTAREA') return;
 
                 const key = e.key.toLowerCase();
 
-                // Phím A hoặc Mũi tên trái -> Lùi về câu trước (ở chế độ từng câu)
                 if (isSingleQuestionMode && (key === 'a' || e.key === 'ArrowLeft')) {
                     e.preventDefault();
                     prevSingleQuestion();
                     return;
                 }
 
-                // Phím D hoặc Mũi tên phải -> Sang câu tiếp theo (ở chế độ từng câu)
                 if (isSingleQuestionMode && (key === 'd' || e.key === 'ArrowRight')) {
                     e.preventDefault();
                     nextSingleQuestion();
                     return;
                 }
 
-                // Phím 1, 2, 3, 4, 5 tương ứng chọn đáp án A, B, C, D, E
                 if (['1', '2', '3', '4', '5'].includes(key)) {
                     e.preventDefault();
                     let optIndex = parseInt(key) - 1;
@@ -875,7 +865,7 @@
                             let radio = currentLabels[optIndex].querySelector('input[type="radio"]');
                             if (radio && !currentLabels[optIndex].classList.contains('disabled')) {
                                 radio.click();
-                                radio.blur(); // Xóa focus ngay lập tức
+                                radio.blur(); 
                             }
                         }
                     } else {
@@ -886,7 +876,7 @@
                                 let radio = labels[optIndex].querySelector('input[type="radio"]');
                                 if (radio) {
                                     radio.click();
-                                    radio.blur(); // Xóa focus ngay lập tức
+                                    radio.blur(); 
                                     break;
                                 }
                             }
@@ -1074,7 +1064,6 @@
                 chatUnsubscribe = null;
             }
 
-            // Tự động đóng menu trên thiết bị di động (nếu đang mở)
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
                 toggleMobileMenu();
@@ -2053,7 +2042,6 @@
         async function startPublicQuiz(id) { const doc = await db.collection('public_quizzes').doc(id).get(); if (doc.exists) openQuizRunner(id, doc.data()); }
 
         function openQuizRunner(id, quiz) {
-            // Ẩn tất cả các tab nền để chỉ hiển thị giao diện làm bài trắc nghiệm
             ['home', 'my-quizzes', 'public-library', 'history', 'documents-library', 'global-chat', 'feedback', 'settings'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if(el) el.classList.add('hidden');
@@ -2089,7 +2077,6 @@
             }
         }
 
-        // --- HÀM XỬ LÝ CHỌN ĐÁP ÁN CHUNG CHO CẢ 2 CHẾ ĐỘ ---
         function handleOptionSelection(qIndex, selectedOpt, q, optionsDiv, label, radio, badgeSide, questionsTotal, isSingle) {
             if (label.classList.contains('disabled')) return;
             
@@ -2100,16 +2087,16 @@
                 let bSide = l.querySelector('div:last-child');
                 if (val.trim() === q.correctAnswer.trim()) {
                     l.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
-                    bSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
+                    bSide.innerHTML = `<span class="font-bold text-teal-500 text-xs md:text-sm bg-teal-500/20 px-2 md:px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                 }
             });
 
             radio.checked = true;
-            radio.blur(); // <-- Xóa focus ngay để tránh lỗi mũi tên điều khiển thẻ radio
+            radio.blur();
 
             if (selectedOpt.trim() !== q.correctAnswer.trim()) {
                 label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-xs md:text-sm bg-red-500/20 px-2 md:px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Chọn ❌</span>`;
                 playWrongSound();
             } else {
                 playCorrectSound();
@@ -2202,7 +2189,7 @@
                             radio.checked = true;
                             if (userSelectedOpt.trim() !== q.correctAnswer.trim()) {
                                 label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                                badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Chọn ❌</span>`;
                             }
                         }
                     }
@@ -2219,7 +2206,7 @@
             document.getElementById('submitQuizBox').classList.remove('hidden');
         }
 
-        // --- RENDER CHẾ ĐỘ TỪNG CÂU (SINGLE QUESTION MODE) ---
+        // --- RENDER CHẾ ĐỘ TỪNG CÂU TỐI ƯU MOBILE ---
         function renderSingleQuestion() {
             if (autoNextTimer) clearTimeout(autoNextTimer);
             const quizContainer = document.getElementById('quizContainer');
@@ -2246,40 +2233,40 @@
             const q = questions[currentSingleIndex];
             const qDiv = document.createElement('div');
             qDiv.id = 'singleQuestionBox';
-            qDiv.className = 'theme-card border p-8 rounded-3xl shadow-2xl animate-fade-in space-y-6 max-w-3xl mx-auto w-full';
+            qDiv.className = 'theme-card border p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl animate-fade-in space-y-4 md:space-y-6 max-w-3xl mx-auto w-full';
 
             let progressHeader = document.createElement('div');
-            progressHeader.className = 'flex justify-between items-center text-xs font-bold text-cyan-500 uppercase tracking-wider border-b border-slate-500/20 pb-3';
-            progressHeader.innerHTML = `<span>Câu hỏi ${currentSingleIndex + 1} / ${questions.length}</span><span>Phím tắt: 1-5 chọn đáp án | A/Trái & D/Phải điều hướng câu</span>`;
+            progressHeader.className = 'flex justify-between items-center text-[10px] md:text-xs font-bold text-cyan-500 uppercase tracking-wider border-b border-slate-500/20 pb-2 md:pb-3';
+            progressHeader.innerHTML = `<span>Câu ${currentSingleIndex + 1} / ${questions.length}</span><span class="hidden md:inline">Phím tắt: 1-5 chọn đáp án | A/Trái & D/Phải điều hướng</span>`;
             qDiv.appendChild(progressHeader);
 
             const questionTitle = document.createElement('h3');
-            questionTitle.className = 'text-lg md:text-xl font-bold leading-relaxed';
+            questionTitle.className = 'text-base md:text-xl font-bold leading-relaxed';
             questionTitle.innerText = q.question;
             qDiv.appendChild(questionTitle);
 
             const optionsDiv = document.createElement('div');
-            optionsDiv.className = 'space-y-3.5';
+            optionsDiv.className = 'space-y-2.5 md:space-y-3.5';
 
             let userSelectedOpt = savedProgress[currentSingleIndex] || null;
 
             q.options.forEach((opt, optIdx) => {
                 const label = document.createElement('label');
-                label.className = 'option-label flex items-center justify-between p-4.5 border rounded-2xl cursor-pointer theme-input hover:shadow-lg text-base';
+                label.className = 'option-label flex items-center justify-between p-3 md:p-4.5 border rounded-xl md:rounded-2xl cursor-pointer theme-input hover:shadow-lg text-sm md:text-base';
                 
                 const leftSide = document.createElement('div');
-                leftSide.className = 'flex items-center gap-3.5 flex-1 pr-3';
+                leftSide.className = 'flex items-center gap-2.5 md:gap-3.5 flex-1 pr-2 md:pr-3';
 
                 const radio = document.createElement('input');
                 radio.type = 'radio'; radio.name = `single_question_${currentSingleIndex}`; radio.value = opt;
-                radio.className = 'w-5 h-5 text-cyan-500 focus:ring-cyan-500 flex-shrink-0';
+                radio.className = 'w-4 h-4 md:w-5 md:h-5 text-cyan-500 focus:ring-cyan-500 flex-shrink-0';
 
                 const keyBadge = document.createElement('span');
-                keyBadge.className = 'text-xs font-bold bg-cyan-500/20 text-cyan-500 px-2 py-0.5 rounded';
+                keyBadge.className = 'hidden md:inline-block text-xs font-bold bg-cyan-500/20 text-cyan-500 px-2 py-0.5 rounded';
                 keyBadge.innerText = `${optIdx + 1}`;
 
                 const textSpan = document.createElement('span');
-                textSpan.className = 'font-medium text-sm md:text-base leading-relaxed'; textSpan.innerText = opt;
+                textSpan.className = 'font-medium leading-relaxed'; textSpan.innerText = opt;
 
                 leftSide.appendChild(keyBadge);
                 leftSide.appendChild(radio);
@@ -2294,13 +2281,13 @@
                     label.classList.add('disabled');
                     if (opt.trim() === q.correctAnswer.trim()) {
                         label.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
-                        badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-sm bg-teal-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
+                        badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-xs md:text-sm bg-teal-500/20 px-2 md:px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                     }
                     if (opt === userSelectedOpt) {
                         radio.checked = true;
                         if (userSelectedOpt.trim() !== q.correctAnswer.trim()) {
                             label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
-                            badgeSide.innerHTML = `<span class="font-bold text-red-500 text-sm bg-red-500/20 px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Bạn chọn ❌</span>`;
+                            badgeSide.innerHTML = `<span class="font-bold text-red-500 text-xs md:text-sm bg-red-500/20 px-2 md:px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Chọn ❌</span>`;
                         }
                     }
                 }
@@ -2314,30 +2301,34 @@
             qDiv.appendChild(optionsDiv);
 
             const navFooter = document.createElement('div');
-            navFooter.className = 'flex justify-between items-center pt-4 border-t border-slate-500/20 flex-wrap gap-4';
-
-            let prevBtn = document.createElement('button');
-            prevBtn.className = `btn-interactive theme-btn px-5 py-2.5 rounded-xl font-bold text-xs border ${currentSingleIndex === 0 ? 'opacity-40 pointer-events-none' : ''}`;
-            prevBtn.innerHTML = `⬅️ Câu Trước (A)`;
-            prevBtn.onclick = () => prevSingleQuestion();
+            navFooter.className = 'flex flex-col gap-3 pt-3 md:pt-4 border-t border-slate-500/20';
 
             let autoBox = document.createElement('div');
-            autoBox.className = 'flex items-center gap-3 text-xs theme-input px-3 py-2 rounded-xl border';
+            autoBox.className = 'flex items-center justify-between text-xs theme-input px-3 py-2 rounded-xl border';
             autoBox.innerHTML = `
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-label">
                     <input type="checkbox" id="autoNextCheckbox" ${isAutoNextEnabled ? 'checked' : ''} onchange="toggleAutoNext(this)" class="w-4 h-4 text-cyan-500 rounded">
-                    Auto chuyển câu
+                    Auto
                 </label>
                 <div class="flex items-center gap-1">
-                    <span class="text-label">Delay:</span>
-                    <input type="number" id="autoDelayInput" min="100" max="10000" step="100" value="${autoNextDelayMs}" onchange="updateAutoDelay(this)" class="w-20 theme-input border rounded-lg px-2 py-1 text-center font-bold">
-                    <span class="text-label">ms</span>
+                    <input type="number" id="autoDelayInput" min="100" max="10000" step="100" value="${autoNextDelayMs}" onchange="updateAutoDelay(this)" class="w-16 theme-input border rounded-lg px-2 py-1 text-center font-bold text-[11px] md:text-xs">
+                    <span class="text-[10px] md:text-xs text-label">ms</span>
                 </div>
             `;
 
+            let btnGroup = document.createElement('div');
+            btnGroup.className = 'flex gap-2 w-full';
+
+            let prevBtn = document.createElement('button');
+            prevBtn.className = `flex-1 btn-interactive theme-btn py-3 md:py-3.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-1 ${currentSingleIndex === 0 ? 'opacity-40 pointer-events-none' : ''}`;
+            prevBtn.innerHTML = `⬅️ <span class="hidden sm:inline">Câu Trước</span><span class="sm:hidden">Trước</span>`;
+            prevBtn.onclick = () => prevSingleQuestion();
+
             let nextBtn = document.createElement('button');
-            nextBtn.className = `btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md`;
-            nextBtn.innerHTML = `${currentSingleIndex === questions.length - 1 ? 'Hoàn thành / Nộp bài' : 'Câu Tiếp ➡️ (D)'}`;
+            nextBtn.className = `flex-1 btn-interactive bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-3 md:py-3.5 rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-1`;
+            nextBtn.innerHTML = currentSingleIndex === questions.length - 1
+                ? `Nộp Bài 🚀`
+                : `<span class="hidden sm:inline">Câu Tiếp</span><span class="sm:hidden">Tiếp</span> ➡️`;
             nextBtn.onclick = () => {
                 if (currentSingleIndex === questions.length - 1) {
                     submitActiveQuiz();
@@ -2346,9 +2337,12 @@
                 }
             };
 
-            navFooter.appendChild(prevBtn);
+            btnGroup.appendChild(prevBtn);
+            btnGroup.appendChild(nextBtn);
+
             navFooter.appendChild(autoBox);
-            navFooter.appendChild(nextBtn);
+            navFooter.appendChild(btnGroup);
+            
             qDiv.appendChild(navFooter);
 
             quizContainer.appendChild(qDiv);
