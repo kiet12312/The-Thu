@@ -411,7 +411,7 @@
                         <div class="space-y-3 text-sm text-label p-4 theme-input border rounded-xl">
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Đã tối ưu truy vấn)</b></p>
-                            <p class="flex items-center gap-2">• Thang điểm bài thi: <b class="text-teal-500">10 Điểm (Tính chuẩn khi Nộp bài)</b></p>
+                            <p class="flex items-center gap-2">• Mô hình AI: <b class="text-teal-500">Gemini 3.0 Flash / 3.5 Flash Lite (Auto Fallback)</b></p>
                             <p class="flex items-center gap-2">• Trạng thái UI/UX: <b class="text-amber-500">Smart AI Chunking & Quick Jump Active</b></p>
                         </div>
                     </div>
@@ -697,8 +697,8 @@
         // --- STATE VARIABLES ---
         let isRegisterMode = false;
         let currentUser = null;
-        let isCurrentUserAdmin = false; // Lưu quyền Admin để tránh gọi Firestore lặp lại
-        let lastActiveTab = 'home';     // Ghi nhớ tab trước khi vào làm bài
+        let isCurrentUserAdmin = false;
+        let lastActiveTab = 'home';
         let fileContent = '';
         let modalCallback = null;
         let selectedDocFile = null;
@@ -716,7 +716,6 @@
         let activeQuizId = null;
         let activeQuizTitleText = "";
 
-        // Khôi phục cài đặt Single / Auto từ localStorage
         let isSingleQuestionMode = localStorage.getItem('quiz_pref_single') === 'true';
         let currentSingleIndex = 0;
         let isAutoNextEnabled = localStorage.getItem('quiz_pref_auto') === 'true';
@@ -788,7 +787,6 @@
                 });
             }
 
-            // Đồng bộ công tắc Single mode từ bộ nhớ
             const singleToggle = document.getElementById('singleQuestionModeToggle');
             if (singleToggle) singleToggle.checked = isSingleQuestionMode;
 
@@ -1811,7 +1809,7 @@
             loadPublicQuizzes();
         }
 
-        // --- QUIZ EDITOR (FIXED OPTION SYNC BUG) ---
+        // --- QUIZ EDITOR ---
         async function openQuizEditor(id) {
             editingQuizId = id;
             const doc = await db.collection('private_quizzes').doc(id).get();
@@ -1820,7 +1818,7 @@
             
             document.getElementById('editorQuizTitleDisplay').innerText = quiz.title;
             editingQuizQuestions = JSON.parse(JSON.stringify(quiz.questions || [])).map(q => {
-                let cIdx = q.options.findIndex(o => isAnswerMatch(o, q.correctAnswer, -1));
+                let cIdx = q.options.findIndex((o, idx) => isAnswerMatch(o, q.correctAnswer, idx));
                 if (cIdx === -1) cIdx = 0;
                 return {
                     question: q.question || '',
@@ -1987,7 +1985,6 @@
             if (autoNextTimer) clearTimeout(autoNextTimer);
             document.getElementById('quizArea').classList.add('hidden'); 
             document.getElementById('quizBottomToolbar').classList.add('hidden');
-            // Khôi phục lại tab trước đó thay vì để màn hình trống
             switchTab(lastActiveTab || 'my-quizzes');
             loadMyQuizzes(); 
             loadPublicQuizzes(); 
@@ -2019,7 +2016,6 @@
             }
         }
 
-        // Tăng giới hạn mỗi đoạn lên 14.000 ký tự để tránh cắt đôi câu hỏi và giảm số lần gọi API
         function chunkText(text, maxChars = 14000) {
             const chunks = [];
             let currentChunk = '';
@@ -2036,7 +2032,6 @@
             return chunks;
         }
 
-        // Chuẩn hóa đáp án đúng do AI trả về để luôn khớp với 1 trong 4 options
         function normalizeQuestions(questions) {
             if (!Array.isArray(questions)) return [];
             return questions.map(q => {
@@ -2058,14 +2053,12 @@
             const c = correctText.trim().toLowerCase();
             if (o === c) return true;
 
-            // Trường hợp AI chỉ trả về "A", "B", "C", "D" hoặc "A."
             const letters = ['a', 'b', 'c', 'd', 'e'];
             if (optIdx >= 0 && optIdx < letters.length) {
                 const letter = letters[optIdx];
                 if (c === letter || c === `${letter}.` || c === `${letter})`) return true;
             }
 
-            // Trường hợp một bên có tiền tố "a. " còn bên kia không có
             const stripPrefix = (s) => s.replace(/^[a-e][\.\)\:\-]\s*/i, '').trim().replace(/\.$/, '');
             if (stripPrefix(o) === stripPrefix(c) && stripPrefix(o).length > 0) return true;
 
@@ -2088,6 +2081,10 @@
             const loader = document.getElementById('loadingIndicator');
             loader.classList.remove('hidden'); loader.classList.remove('animate-pop-in'); void loader.offsetWidth; loader.classList.add('animate-pop-in');
 
+            // Danh sách model ưu tiên thử lần lượt và ghi nhớ model hoạt động tốt
+            const fallbackModels = ['gemini-3.0-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+            let workingModel = null;
+
             try {
                 const chunks = chunkText(fileContent, 14000);
                 let generatedQuestions = [];
@@ -2095,19 +2092,34 @@
                 for (let i = 0; i < chunks.length; i++) {
                     document.getElementById('loadingText').innerText = `Đang quét phần (${i + 1}/${chunks.length}). Đã trích xuất: ${generatedQuestions.length} câu...`;
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Bạn là trợ lý AI chuyên gia trắc nghiệm học thuật. Hãy phân tích kỹ đoạn văn bản tài liệu dưới đây và trích xuất TOÀN BỘ câu hỏi trắc nghiệm xuất hiện trong đoạn (không bỏ sót bất kỳ câu nào).\n- Mỗi câu hỏi phải có đầy đủ nội dung câu hỏi, các đáp án lựa chọn.\n- Trường correctAnswer PHẢI copy nguyên văn 100% chuỗi ký tự của đáp án đúng nằm trong mảng options (nếu tài liệu chưa đánh dấu sẵn đáp án, hãy tự giải và chọn đáp án chính xác nhất).\nVăn bản tài liệu:\n${chunks[i]}` }] }],
-                            generationConfig: {
-                                responseMimeType: "application/json",
-                                responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { question: { type: "STRING" }, options: { type: "ARRAY", items: { type: "STRING" } }, correctAnswer: { type: "STRING" } }, required: ["question", "options", "correctAnswer"] } }
-                            }
-                        })
-                    });
+                    let data = null;
+                    let lastError = null;
+                    const candidateModels = workingModel ? [workingModel] : fallbackModels;
 
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error.message);
+                    for (const modelName of candidateModels) {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: `Bạn là trợ lý AI chuyên gia trắc nghiệm học thuật. Hãy phân tích kỹ đoạn văn bản tài liệu dưới đây và trích xuất TOÀN BỘ câu hỏi trắc nghiệm xuất hiện trong đoạn (không bỏ sót bất kỳ câu nào).\n- Mỗi câu hỏi phải có đầy đủ nội dung câu hỏi, các đáp án lựa chọn.\n- Trường correctAnswer PHẢI copy nguyên văn 100% chuỗi ký tự của đáp án đúng nằm trong mảng options (nếu tài liệu chưa đánh dấu sẵn đáp án, hãy tự giải và chọn đáp án chính xác nhất).\nVăn bản tài liệu:\n${chunks[i]}` }] }],
+                                generationConfig: {
+                                    responseMimeType: "application/json",
+                                    responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { question: { type: "STRING" }, options: { type: "ARRAY", items: { type: "STRING" } }, correctAnswer: { type: "STRING" } }, required: ["question", "options", "correctAnswer"] } }
+                                }
+                            })
+                        });
+
+                        const resJson = await response.json();
+                        if (!resJson.error) {
+                            data = resJson;
+                            workingModel = modelName; // Lưu lại model thành công cho các phần tiếp theo
+                            break;
+                        } else {
+                            lastError = resJson.error.message;
+                        }
+                    }
+
+                    if (!data) throw new Error(lastError || "Không thể kết nối đến Gemini API.");
+                    
                     const rawQuestions = JSON.parse(data.candidates[0].content.parts[0].text);
                     const cleaned = normalizeQuestions(rawQuestions);
                     generatedQuestions = generatedQuestions.concat(cleaned);
@@ -2158,7 +2170,6 @@
             
             document.getElementById('singleQuestionModeToggle').checked = isSingleQuestionMode;
 
-            // Tự động nhảy đến câu đầu tiên chưa làm nếu có tiến trình lưu dở
             const savedProg = getSavedProgress();
             let firstUnanswered = 0;
             for (let i = 0; i < currentActiveQuestions.length; i++) {
@@ -2221,7 +2232,6 @@
             let count = Object.keys(currentProg).length;
             document.getElementById('answeredCount').innerText = count;
 
-            // Cập nhật trạng thái câu hỏi trên dropdown chọn nhanh (nếu ở Single Mode)
             const jumpSelect = document.getElementById('quickJumpSelect');
             if (jumpSelect && jumpSelect.options[qIndex]) {
                 const isRight = isAnswerMatch(selectedOpt, q.correctAnswer, chosenIdx);
@@ -2340,7 +2350,6 @@
             qDiv.id = 'singleQuestionBox';
             qDiv.className = 'theme-card border p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl animate-fade-in space-y-4 md:space-y-6 max-w-3xl mx-auto w-full';
 
-            // Tạo Dropdown nhảy nhanh đến câu hỏi bất kỳ
             let selectOptionsHtml = questions.map((item, idx) => {
                 let ans = savedProgress[idx];
                 let statusIcon = '⚪';
@@ -2426,7 +2435,6 @@
             quizContainer.appendChild(qDiv);
             document.getElementById('submitQuizBox').classList.add('hidden');
 
-            // Hiển thị thanh Toolbar cố định ở dưới đáy
             const toolbar = document.getElementById('quizBottomToolbar');
             toolbar.classList.remove('hidden');
             
