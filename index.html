@@ -435,7 +435,7 @@
                             <p class="flex items-center gap-2">• Tài khoản đang đăng nhập: <b class="text-cyan-500" id="settingsUsername">---</b></p>
                             <p class="flex items-center gap-2">• Cơ sở dữ liệu đám mây: <b class="text-teal-500">Firebase Firestore (Đã tối ưu truy vấn)</b></p>
                             <p class="flex items-center gap-2">• Mô hình AI: <b class="text-teal-500">Gemini Flash-Lite (Ưu tiên Model nhẹ nhất & Chống quá tải)</b></p>
-                            <p class="flex items-center gap-2">• Hiển thị Toán học: <b class="text-amber-500">MathJax LaTeX Engine Active</b></p>
+                            <p class="flex items-center gap-2">• Tính năng làm bài: <b class="text-amber-500">Đảo lộn đáp án A-B-C-D & MathJax LaTeX Active</b></p>
                         </div>
                     </div>
                 </div>
@@ -488,14 +488,24 @@
                 <div id="quizArea" class="hidden space-y-5 animate-fade-in">
                     
                     <!-- BẢNG ĐIỂM TỐI ƯU MOBILE & DESKTOP -->
-                    <div id="scoreBoard" class="sticky top-2 md:top-4 z-30 theme-card border rounded-xl md:rounded-2xl p-3 md:p-4 flex flex-wrap justify-between items-center shadow-xl gap-2 md:gap-4 transition-colors duration-500">
+                    <div id="scoreBoard" class="sticky top-2 md:top-4 z-30 theme-card border rounded-xl md:rounded-2xl p-3 md:p-4 flex flex-wrap justify-between items-center shadow-xl gap-2 md:gap-3 transition-colors duration-500">
                         <div class="flex-1 min-w-[110px]">
                             <h2 id="activeQuizTitle" class="text-sm md:text-lg font-bold text-cyan-500 truncate">Tên Bài Học</h2>
                             <p class="text-[10px] md:text-xs text-label mt-0.5">Đã làm: <span id="answeredCount" class="font-bold text-teal-500">0</span> / <span id="totalCount" class="font-bold">0</span></p>
                         </div>
 
                         <!-- CÔNG TẮC & ĐIỀU KHIỂN -->
-                        <div class="flex items-center gap-1.5 md:gap-3 shrink-0">
+                        <div class="flex items-center flex-wrap gap-1.5 md:gap-2.5 shrink-0">
+                            <!-- Công tắc Đảo Đáp Án A B C D -->
+                            <div class="flex items-center gap-1.5 theme-input px-2 md:px-3 py-1.5 rounded-lg md:rounded-xl border" title="Tự động đảo vị trí các đáp án A, B, C, D">
+                                <span class="text-[10px] md:text-xs font-semibold text-label">🔀 Đảo ĐA:</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="shuffleOptionsToggle" class="sr-only peer" onchange="toggleShuffleOptionsMode()">
+                                    <div class="w-8 h-4 md:w-9 md:h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 md:after:h-4 md:after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+                                </label>
+                            </div>
+
+                            <!-- Công tắc Chế độ Single -->
                             <div class="flex items-center gap-1.5 theme-input px-2 md:px-3 py-1.5 rounded-lg md:rounded-xl border">
                                 <span class="text-[10px] md:text-xs font-semibold text-label">Single:</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -504,7 +514,7 @@
                                 </label>
                             </div>
 
-                            <button onclick="clearQuizProgress()" class="text-[10px] md:text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-amber-500/30 transition-colors" title="Làm lại từ đầu">🔄 <span class="hidden sm:inline">Làm Lại</span></button>
+                            <button onclick="clearQuizProgress()" class="text-[10px] md:text-xs btn-interactive bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 font-bold px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-amber-500/30 transition-colors" title="Làm lại & Đảo lại đáp án">🔄 <span class="hidden sm:inline">Làm Lại</span></button>
                             <button onclick="submitActiveQuiz()" class="text-[10px] md:text-xs btn-interactive bg-teal-500/20 hover:bg-teal-500/30 text-teal-500 font-bold px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-teal-500/30 transition-colors" title="Nộp bài ngay">🚀 <span class="hidden sm:inline">Nộp</span></button>
                             <button onclick="backToDashboard()" class="text-[10px] md:text-xs btn-interactive theme-btn px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-lg md:rounded-xl font-bold border transition-colors hover:bg-slate-500/10">Thoát</button>
                         </div>
@@ -735,11 +745,14 @@
         let editingQuizId = null;
         let editingQuizQuestions = [];
 
+        let rawActiveQuizQuestions = [];
         let currentActiveQuestions = [];
         let activeQuizId = null;
         let activeQuizTitleText = "";
 
         let isSingleQuestionMode = localStorage.getItem('quiz_pref_single') === 'true';
+        // Mặc định bật tính năng Đảo đáp án A, B, C, D (trừ khi người dùng chủ động tắt)
+        let isShuffleOptionsEnabled = localStorage.getItem('quiz_pref_shuffle_opts') !== 'false';
         let currentSingleIndex = 0;
         let isAutoNextEnabled = localStorage.getItem('quiz_pref_auto') === 'true';
         let autoNextDelayMs = parseInt(localStorage.getItem('quiz_pref_delay')) || 1000;
@@ -812,6 +825,9 @@
 
             const singleToggle = document.getElementById('singleQuestionModeToggle');
             if (singleToggle) singleToggle.checked = isSingleQuestionMode;
+
+            const shuffleToggle = document.getElementById('shuffleOptionsToggle');
+            if (shuffleToggle) shuffleToggle.checked = isShuffleOptionsEnabled;
 
             const savedUser = localStorage.getItem('quiz_current_user');
             const savedApiKey = localStorage.getItem('quiz_gemini_apikey');
@@ -2063,19 +2079,97 @@
                 .trim();
         }
 
+        // Cắt bỏ tiền tố A., B., C., D. ở đầu đáp án để khi đảo lộn không bị trùng/sai thứ tự chữ cái
+        function stripOptionLetterPrefix(str) {
+            if (!str) return '';
+            return cleanLatexText(str).replace(/^(?:đáp\s*án\s*)?[a-eA-E]\s*[\.\)\:\-]\s*/i, '').trim();
+        }
+
         function normalizeQuestions(questions) {
             if (!Array.isArray(questions)) return [];
             return questions.map(q => {
                 if (!q || !Array.isArray(q.options) || q.options.length === 0) return null;
                 let opts = q.options.map(o => cleanLatexText(o));
                 let rawCorrect = cleanLatexText(q.correctAnswer || '');
-                let matchedOpt = opts.find((o, idx) => isAnswerMatch(o, rawCorrect, idx));
+                let matchedIdx = opts.findIndex((o, idx) => isAnswerMatch(o, rawCorrect, idx));
+                if (matchedIdx === -1) matchedIdx = 0;
                 return {
                     question: cleanLatexText(q.question || ''),
                     options: opts,
-                    correctAnswer: matchedOpt || opts[0]
+                    correctAnswer: opts[matchedIdx]
                 };
             }).filter(Boolean);
+        }
+
+        // Chuẩn bị bộ câu hỏi cho phiên làm bài: hỗ trợ đảo lộn đáp án A, B, C, D và gán lại nhãn A. B. C. D.
+        function buildActiveQuestionsWithShuffle(rawQuestions, forceReshuffle = false) {
+            const normalized = normalizeQuestions(rawQuestions);
+            const cacheKey = `quiz_shuffled_opts_${currentUser}_${activeQuizId}`;
+
+            if (!isShuffleOptionsEnabled) {
+                localStorage.removeItem(cacheKey);
+                return normalized.map(q => {
+                    const cIdx = q.options.findIndex((o, idx) => isAnswerMatch(o, q.correctAnswer, idx));
+                    const validCorrectIdx = cIdx !== -1 ? cIdx : 0;
+                    const labeledOpts = q.options.map((o, idx) => {
+                        const letter = String.fromCharCode(65 + idx);
+                        const pure = stripOptionLetterPrefix(o);
+                        return `${letter}. ${pure}`;
+                    });
+                    return {
+                        question: q.question,
+                        options: labeledOpts,
+                        correctAnswer: labeledOpts[validCorrectIdx]
+                    };
+                });
+            }
+
+            if (!forceReshuffle) {
+                try {
+                    const cached = JSON.parse(localStorage.getItem(cacheKey));
+                    if (Array.isArray(cached) && cached.length === normalized.length) {
+                        return cached;
+                    }
+                } catch (e) {}
+            }
+
+            const shuffledQuestions = normalized.map(q => {
+                const cIdx = q.options.findIndex((o, idx) => isAnswerMatch(o, q.correctAnswer, idx));
+                const validCorrectIdx = cIdx !== -1 ? cIdx : 0;
+
+                const pool = q.options.map((o, idx) => ({
+                    pureText: stripOptionLetterPrefix(o),
+                    isCorrect: idx === validCorrectIdx
+                }));
+
+                // Thuật toán Fisher-Yates xáo trộn ngẫu nhiên các đáp án A, B, C, D
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const temp = pool[i];
+                    pool[i] = pool[j];
+                    pool[j] = temp;
+                }
+
+                let newCorrectAnswer = '';
+                const newOptions = pool.map((item, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    const labeled = `${letter}. ${item.pureText}`;
+                    if (item.isCorrect) newCorrectAnswer = labeled;
+                    return labeled;
+                });
+
+                return {
+                    question: q.question,
+                    options: newOptions,
+                    correctAnswer: newCorrectAnswer || newOptions[0]
+                };
+            });
+
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(shuffledQuestions));
+            } catch (e) {}
+
+            return shuffledQuestions;
         }
 
         function isAnswerMatch(optText, correctText, optIdx) {
@@ -2090,8 +2184,9 @@
                 if (c === letter || c === `${letter}.` || c === `${letter})`) return true;
             }
 
-            const stripPrefix = (s) => s.replace(/^[a-e][\.\)\:\-]\s*/i, '').trim().replace(/\.$/, '');
-            if (stripPrefix(o) === stripPrefix(c) && stripPrefix(o).length > 0) return true;
+            const pureO = stripOptionLetterPrefix(o).replace(/\.$/, '');
+            const pureC = stripOptionLetterPrefix(c).replace(/\.$/, '');
+            if (pureO === pureC && pureO.length > 0) return true;
 
             return false;
         }
@@ -2119,7 +2214,6 @@
 
                 if (validModels.length === 0) return liteFallback;
 
-                // Chấm điểm ưu tiên: điểm càng nhỏ càng được ưu tiên chạy trước (Flash-Lite -> Flash thường -> Pro)
                 const scoreModel = (name) => {
                     const n = name.toLowerCase();
                     if (n.includes('flash-lite') || n.includes('8b')) {
@@ -2254,12 +2348,14 @@
 
             activeQuizId = id;
             activeQuizTitleText = quiz.title;
-            currentActiveQuestions = normalizeQuestions(quiz.questions);
+            rawActiveQuizQuestions = quiz.questions || [];
+            currentActiveQuestions = buildActiveQuestionsWithShuffle(rawActiveQuizQuestions, false);
 
             const quizArea = document.getElementById('quizArea');
             document.getElementById('activeQuizTitle').innerText = quiz.title;
             
             document.getElementById('singleQuestionModeToggle').checked = isSingleQuestionMode;
+            document.getElementById('shuffleOptionsToggle').checked = isShuffleOptionsEnabled;
 
             const savedProg = getSavedProgress();
             let firstUnanswered = 0;
@@ -2277,6 +2373,35 @@
             }
 
             document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Bật / Tắt chế độ Đảo đáp án A, B, C, D ngay khi đang làm bài
+        function toggleShuffleOptionsMode() {
+            isShuffleOptionsEnabled = document.getElementById('shuffleOptionsToggle').checked;
+            localStorage.setItem('quiz_pref_shuffle_opts', isShuffleOptionsEnabled);
+            if (autoNextTimer) clearTimeout(autoNextTimer);
+
+            const oldProg = getSavedProgress();
+            currentActiveQuestions = buildActiveQuestionsWithShuffle(rawActiveQuizQuestions, true);
+
+            // Đồng bộ lại các câu đã chọn trước đó sang vị trí chữ cái mới sau khi đảo
+            const updatedProg = {};
+            Object.keys(oldProg).forEach(qIdx => {
+                const chosenOld = oldProg[qIdx];
+                const qNew = currentActiveQuestions[qIdx];
+                if (chosenOld && qNew && Array.isArray(qNew.options)) {
+                    const pureOld = stripOptionLetterPrefix(chosenOld).toLowerCase();
+                    const matchedNewOpt = qNew.options.find(o => stripOptionLetterPrefix(o).toLowerCase() === pureOld);
+                    if (matchedNewOpt) updatedProg[qIdx] = matchedNewOpt;
+                }
+            });
+            localStorage.setItem(`quiz_progress_${currentUser}_${activeQuizId}`, JSON.stringify(updatedProg));
+
+            if (isSingleQuestionMode) {
+                renderSingleQuestion();
+            } else {
+                renderQuizList(currentActiveQuestions);
+            }
         }
 
         function toggleSingleQuestionMode() {
@@ -2396,7 +2521,7 @@
                             label.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
                             badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-xs md:text-sm bg-teal-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                         }
-                        if (cleanLatexText(opt) === cleanLatexText(userSelectedOpt)) {
+                        if (stripOptionLetterPrefix(opt).toLowerCase() === stripOptionLetterPrefix(userSelectedOpt).toLowerCase()) {
                             radio.checked = true;
                             if (!isAnswerMatch(userSelectedOpt, q.correctAnswer, optIdx)) {
                                 label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
@@ -2446,7 +2571,7 @@
                 let ans = savedProgress[idx];
                 let statusIcon = '⚪';
                 if (ans) {
-                    let chosenIdx = item.options.findIndex(o => cleanLatexText(o) === cleanLatexText(ans));
+                    let chosenIdx = item.options.findIndex(o => stripOptionLetterPrefix(o).toLowerCase() === stripOptionLetterPrefix(ans).toLowerCase());
                     statusIcon = isAnswerMatch(ans, item.correctAnswer, chosenIdx) ? '✔' : '❌';
                 }
                 return `<option value="${idx}" ${idx === currentSingleIndex ? 'selected' : ''} class="bg-slate-800 text-white">Câu ${idx + 1} / ${questions.length} ${statusIcon}</option>`;
@@ -2507,7 +2632,7 @@
                         label.classList.add('bg-teal-500/20', 'border-teal-500', 'text-teal-600', 'dark:text-teal-300');
                         badgeSide.innerHTML = `<span class="font-bold text-teal-500 text-xs md:text-sm bg-teal-500/20 px-2 md:px-3 py-1 rounded-lg flex items-center gap-1 shadow-sm">Đúng ✔</span>`;
                     }
-                    if (cleanLatexText(opt) === cleanLatexText(userSelectedOpt)) {
+                    if (stripOptionLetterPrefix(opt).toLowerCase() === stripOptionLetterPrefix(userSelectedOpt).toLowerCase()) {
                         radio.checked = true;
                         if (!isAnswerMatch(userSelectedOpt, q.correctAnswer, optIdx)) {
                             label.classList.add('bg-red-500/20', 'border-red-500', 'text-red-600', 'dark:text-red-300');
@@ -2588,15 +2713,18 @@
         }
 
         function clearQuizProgress() {
-            showConfirmModal("Xác Nhận Làm Lại", "Bạn có muốn xóa tiến trình đang làm dở để bắt đầu lại từ đầu không?", () => {
+            showConfirmModal("Xác Nhận Làm Lại", "Bạn có muốn xóa tiến trình đang làm dở và đảo lại đáp án A, B, C, D từ đầu không?", () => {
                 localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                currentActiveQuestions = buildActiveQuestionsWithShuffle(rawActiveQuizQuestions, true);
                 currentSingleIndex = 0;
                 if (isSingleQuestionMode) {
                     renderSingleQuestion();
                 } else {
                     renderQuizList(currentActiveQuestions);
                 }
-                showAlertModal("Đã đặt lại tiến trình bài thi!");
+                showAlertModal(isShuffleOptionsEnabled
+                    ? "Đã đặt lại tiến trình và đảo mới thứ tự đáp án A, B, C, D!"
+                    : "Đã đặt lại tiến trình bài thi!");
             });
         }
 
@@ -2614,7 +2742,7 @@
                 let userChoice = savedProgress[qIndex];
                 if (userChoice) {
                     answeredCount++;
-                    let chosenIdx = q.options.findIndex(o => cleanLatexText(o) === cleanLatexText(userChoice));
+                    let chosenIdx = q.options.findIndex(o => stripOptionLetterPrefix(o).toLowerCase() === stripOptionLetterPrefix(userChoice).toLowerCase());
                     if (isAnswerMatch(userChoice, q.correctAnswer, chosenIdx)) {
                         currentScore += pointsPerQuestion;
                     }
@@ -2632,6 +2760,7 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 localStorage.removeItem(`quiz_progress_${currentUser}_${activeQuizId}`);
+                localStorage.removeItem(`quiz_shuffled_opts_${currentUser}_${activeQuizId}`);
             } catch (err) {
                 console.error("Lỗi lưu kết quả:", err);
             }
